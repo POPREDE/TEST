@@ -102,7 +102,7 @@ body {
     box-shadow: 0 0 20px rgba(255,221,85,.6);
 }
 
-/* Logo Strip (2 logos, wide) */
+/* Logo Strip (2 logos) */
 .logo-strip-grid {
     display: grid;
     grid-template-columns: repeat(2,1fr);
@@ -201,4 +201,11 @@ body {
     font-size: 13px;
     font-weight: 700;
     color: #ffdd55;
+}
+
+/* Footer */
+.footer {
+    text-align: center;
+    margin-top: 20px;
+    opacity: .5;
 }
