@@ -30,7 +30,7 @@ async function fetchCSV(url) {
 
 
 //------------------------------------------------------------
-// LOAD GLOBAL RTP (EVERYONE SEES SAME DATA)
+// LOAD GLOBAL RTP
 //------------------------------------------------------------
 async function loadRTP(provider) {
     const res = await fetch(RTP_JSON + "?cache=" + Date.now());
@@ -40,7 +40,7 @@ async function loadRTP(provider) {
 
 
 //------------------------------------------------------------
-// RTP COLOR
+// COLOR
 //------------------------------------------------------------
 function getColorClass(rtp) {
     if (rtp >= 90) return "rtp-green";
@@ -50,7 +50,7 @@ function getColorClass(rtp) {
 
 
 //------------------------------------------------------------
-// REGISTER / LOGIN SOURCES
+// LINKS
 //------------------------------------------------------------
 async function loadLinks() {
     const list = await fetchCSV(LINK_CSV);
@@ -79,7 +79,6 @@ async function loadBanners() {
         track.innerHTML += `
             <div class="slide">
                 <img src="${b.banner_url}">
-                ${b.banner_text ? `<div class="slide-text">${b.banner_text}</div>` : ""}
             </div>
         `;
         dots.innerHTML += `<span class="dot ${i===0?'active':''}" data-id="${i}"></span>`;
@@ -120,7 +119,7 @@ function startSlider(total) {
 
 
 //------------------------------------------------------------
-// LOGO STRIP (PG + PRAGMATIC ONLY)
+// LOGO STRIP (2 LOGO WIDE)
 //------------------------------------------------------------
 async function loadLogoStrip() {
     const list = await fetchCSV(LOGO_CSV);
@@ -140,7 +139,7 @@ async function loadLogoStrip() {
 
 
 //------------------------------------------------------------
-// GAME GRID USING GLOBAL RTP
+// GAME GRID (FINAL)
 //------------------------------------------------------------
 async function renderGames(provider="PG") {
 
@@ -173,7 +172,7 @@ async function renderGames(provider="PG") {
 
 
 //------------------------------------------------------------
-// PROVIDER BUTTON EVENT
+// PROVIDER SWITCH
 //------------------------------------------------------------
 document.querySelectorAll(".provider").forEach(btn=>{
     btn.onclick = () => {
