@@ -1,22 +1,25 @@
-// =======================
-// CONFIG
-// =======================
+// ===========================================================
+// CONFIG — GANTI SHEET ID KAMU
+// ===========================================================
 
-// GANTI dengan Google Sheets kamu
-const SHEET_URL = "https://opensheet.elk.sh/1AbCDeFgHiJKLM12345/GameList";
+const SHEET_ID = "PASTE_SHEET_ID_HERE";
+
+const GAME_URL   = `https://opensheet.elk.sh/${SHEET_ID}/GameList`;
+const LINKS_URL  = `https://opensheet.elk.sh/${SHEET_ID}/Links`;
+const BANNER_URL = `https://opensheet.elk.sh/${SHEET_ID}/Banners`;
 
 const MIN_DAILY = 50;
 const MAX_DAILY = 98;
 const MIN_CHANGE = 0.1;
 const MAX_CHANGE = 1;
+const RTP_INTERVAL = 5 * 60 * 1000;
 
-const INTERVAL = 5 * 60 * 1000; // 5 menit
-const STORAGE_KEY = "rtpAutoPremium";
+const STORAGE_KEY = "rtpSystemAutoPremium";
 
 
-// =======================
+// ===========================================================
 // RTP SYSTEM
-// =======================
+// ===========================================================
 
 function loadRTP() {
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
@@ -56,7 +59,7 @@ function updateRTP() {
     const change = randomMinuteChange();
     const dir = Math.random() < 0.5 ? -1 : 1;
 
-    rtp = Number((rtp + dir*change).toFixed(2));
+    rtp = Number((rtp + dir * change).toFixed(2));
 
     if (rtp > 99.9) rtp = 99.9;
     if (rtp < 30) rtp = 30;
@@ -65,71 +68,134 @@ function updateRTP() {
 }
 
 
-// =======================
+// ===========================================================
 // FETCH GOOGLE SHEETS
-// =======================
+// ===========================================================
 
 async function getGames() {
-    const res = await fetch(SHEET_URL);
+    const res = await fetch(GAME_URL);
     return await res.json();
 }
 
+async function loadLinks() {
+    const res = await fetch(LINKS_URL);
+    const list = await res.json();
 
-// =======================
-// RENDER CARD
-// =======================
+    document.getElementById("btn-register").href = list.find(a => a.key === "register")?.value || "#";
+    document.getElementById("btn-login").href    = list.find(a => a.key === "login")?.value || "#";
+}
 
-async function renderRTP(providerFilter="ALL") {
-    const games = await getGames();
-    const wrap = document.querySelector("#rtp-container");
+async function loadBanners() {
+    const res = await fetch(BANNER_URL);
+    const list = await res.json();
+
+    const track = document.getElementById("slider-track");
+    const dotsWrap = document.getElementById("slider-dots");
+
+    track.innerHTML = "";
+    dotsWrap.innerHTML = "";
+
+    list.forEach((b, i) => {
+        track.innerHTML += `
+        <div class="slide">
+            <img src="${b.banner_url}">
+            ${b.banner_text ? `<div class="slide-text">${b.banner_text}</div>` : ""}
+        </div>`;
+
+        dotsWrap.innerHTML += `<span class="dot ${i===0?"active":""}" data-index="${i}"></span>`;
+    });
+
+    startSlider(list.length);
+}
+
+
+// ===========================================================
+// SLIDER SYSTEM
+// ===========================================================
+
+let currentSlide = 0;
+let sliderTimer;
+
+function startSlider(total) {
+    const track = document.getElementById("slider-track");
+    const dots = document.querySelectorAll(".dot");
+
+    function switchSlide(n) {
+        currentSlide = (n + total) % total;
+        track.style.transform = `translateX(-${currentSlide * 100}%)`;
+
+        dots.forEach(d => d.classList.remove("active"));
+        dots[currentSlide].classList.add("active");
+    }
+
+    dots.forEach(d => {
+        d.addEventListener("click", () => {
+            clearInterval(sliderTimer);
+            switchSlide(Number(d.dataset.index));
+            autoSlide();
+        });
+    });
+
+    function autoSlide() {
+        sliderTimer = setInterval(() => switchSlide(currentSlide + 1), 4000);
+    }
+
+    autoSlide();
+}
+
+
+// ===========================================================
+// RENDER GAME LIST
+// ===========================================================
+
+async function renderGames(provider="ALL") {
+    const wrap = document.getElementById("rtp-container");
     wrap.innerHTML = "";
 
-    const data = loadRTP();
-    const rtp = data.rtp;
+    const list = await getGames();
+    const rtp = loadRTP().rtp;
 
-    games
-        .filter(g => providerFilter === "ALL" || g.provider === providerFilter)
+    list
+        .filter(g => provider==="ALL" || g.provider === provider)
         .forEach(g => {
-
-            const card = document.createElement("div");
-            card.classList.add("card");
-
-            card.innerHTML = `
-                <img src="${g.image_url}" alt="">
+            wrap.innerHTML += `
+            <div class="card">
+                <img src="${g.image_url}">
                 <div class="card-content">
                     <h2>${g.game_name}</h2>
-                    <div class="provider-tag">${g.provider || "Unknown Provider"}</div>
+                    <div class="provider-tag">${g.provider}</div>
                 </div>
                 <div class="rtp-badge">${rtp}%</div>
-            `;
-
-            wrap.appendChild(card);
+            </div>`;
         });
 }
 
 
-// =======================
-// PROVIDER FILTER BUTTON
-// =======================
+// ===========================================================
+// PROVIDER BUTTONS
+// ===========================================================
 
 document.querySelectorAll(".provider").forEach(btn => {
     btn.addEventListener("click", () => {
         document.querySelectorAll(".provider").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
 
-        const provider = btn.getAttribute("data-provider");
-        renderRTP(provider);
+        const prov = btn.dataset.provider;
+        renderGames(prov);
     });
 });
 
 
-// =======================
+// ===========================================================
 // RUN
-// =======================
+// ===========================================================
 
-renderRTP();
+renderGames();
+loadBanners();
+loadLinks();
 
 setInterval(() => {
     updateRTP();
-    renderRTP(document.querySelector(".provider.active").dataset.provider);
-}, INTERVAL);
+    const activeProv = document.querySelector(".provider.active").dataset.provider;
+    renderGames(activeProv);
+}, RTP_INTERVAL);
