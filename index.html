@@ -13,41 +13,42 @@
 </head>
 <body>
 
-<header class="hero glass-header">
+<!-- HEADER -->
+<header class="hero">
     <img src="https://ik.imagekit.io/vs2btsn6j/LOGO?updatedAt=1764115415618" class="logo">
     <h1>VN FOOD</h1>
 </header>
 
-<!-- BOTTOM NAVIGATION -->
-<div class="bottom-nav">
-    <button class="nav-btn" onclick="openHome()">🏠 Home</button>
-    <button class="nav-btn" onclick="openCategoryPage()">📦 Category</button>
-</div>
-
-<!-- HIGHLIGHT BUTTON -->
+<!-- ⭐ HIGHLIGHT BUTTON -->
 <div id="highlightToggle" class="highlight-toggle" onclick="toggleHighlightMenu()">
     ⭐
 </div>
 
-<!-- HIGHLIGHT MENU -->
+<!-- ⭐ HIGHLIGHT MENU -->
 <div id="highlightMenu" class="highlight-menu">
     <div id="highlightSlider"></div>
 </div>
 
-<!-- SEARCH BAR -->
+<!-- 🔍 SEARCH BAR BAWAH -->
 <div id="searchBar" class="floating-search">
     <input type="text" id="searchInput" placeholder="Search..." onkeyup="applyFilters()">
     <button class="close-search" onclick="closeSearch()">✖</button>
 </div>
 
-<!-- HOME PAGE -->
+<!-- 🔽 BOTTOM NAVIGATION -->
+<div class="bottom-nav">
+    <button class="nav-btn" onclick="openHome()">🏠 Home</button>
+    <button class="nav-btn" onclick="openCategoryPage()">📦 Category</button>
+</div>
+
+<!-- 🏠 HOME PAGE -->
 <div id="homePage" class="page active">
     <div class="grid-container">
         <div class="grid" id="productGrid"></div>
     </div>
 </div>
 
-<!-- CATEGORY LIST PAGE -->
+<!-- 📦 CATEGORY LIST PAGE -->
 <div id="categoryPage" class="page">
     <h2 class="page-title">Select Category</h2>
     <div id="categoryList" class="category-list"></div>
@@ -55,17 +56,16 @@
     <button class="back-btn" onclick="openHome()">← Back</button>
 </div>
 
-<!-- CATEGORY ITEM PAGE -->
+<!-- 📂 CATEGORY DETAIL PAGE -->
 <div id="categoryItemPage" class="page">
     <h2 class="page-title" id="categoryTitle"></h2>
     <div class="grid-container">
         <div class="grid" id="categoryGrid"></div>
     </div>
-
     <button class="back-btn" onclick="openCategoryPage()">← Back Categories</button>
 </div>
 
-<!-- IMAGE VIEWER -->
+<!-- 🖼️ IMAGE VIEWER -->
 <div id="imageViewer" class="image-viewer" onclick="closeImageViewer()">
     <img id="viewerImg" src="">
 </div>
