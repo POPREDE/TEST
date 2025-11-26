@@ -2,60 +2,60 @@ name: Update RTP JSON
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "*/5 * * * *"   # setiap 5 menit
   workflow_dispatch:
 
 jobs:
   update:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout Repository
+      - name: Checkout Repo
         uses: actions/checkout@v3
 
       - name: Generate RTP JSON
         run: |
           node << 'EOF'
-          const fs = require('fs');
+          const fs = require("fs");
 
-          function shuffle(arr) {
-            for (let i = arr.length - 1; i > 0; i--) {
+          function shuffle(a) {
+            for (let i = a.length - 1; i > 0; i--) {
               const j = Math.floor(Math.random() * (i + 1));
-              [arr[i], arr[j]] = [arr[j], arr[i]];
+              [a[i], a[j]] = [a[j], a[i]];
             }
-            return arr;
+            return a;
           }
 
           function generateRTP(count) {
             const arr = [];
-            const high98 = Math.floor(Math.random() * 2) + 3;
-            const highRange = 10;
+            const top = Math.floor(Math.random() * 2) + 3; // 3-4 game 98%
+            for (let i = 0; i < top; i++) arr.push(98);
 
-            for (let i = 0; i < high98; i++) arr.push(98);
-            for (let i = 0; i < highRange; i++) arr.push(Math.floor(Math.random() * 8) + 90);
+            for (let i = 0; i < 10; i++) arr.push(Math.floor(Math.random()*8)+90);
 
-            while (arr.length < count) arr.push(Math.floor(Math.random() * 40) + 50);
+            while (arr.length < count) arr.push(Math.floor(Math.random()*40)+50);
 
             return shuffle(arr);
           }
 
-          const pg_games = 100;
-          const pragmatic_games = 100;
+          const total_pg = 200;         // kamu bisa sesuaikan
+          const total_prag = 200;
 
-          const rtpData = {
+          const newData = {
             generated_at: new Date().toISOString(),
             provider: {
-              PG: generateRTP(pg_games),
-              PRAGMATIC: generateRTP(pragmatic_games)
+              PG: generateRTP(total_pg),
+              PRAGMATIC: generateRTP(total_prag)
             }
           };
 
-          fs.writeFileSync("rtp.json", JSON.stringify(rtpData, null, 2));
+          fs.writeFileSync("rtp.json", JSON.stringify(newData, null, 2));
           EOF
 
-      - name: Commit Changes
+      - name: Commit file
         run: |
-          git config --global user.name "github-actions"
+          git config --global user.name  "github-actions"
           git config --global user.email "actions@github.com"
           git add rtp.json
-          git commit -m "Auto update RTP JSON" || echo "No changes"
+          git commit -m "Auto update RTP" || echo "No changes"
           git push
