@@ -1,4 +1,4 @@
-/* RESET */
+/* Reset */
 * {
     margin: 0;
     padding: 0;
@@ -6,13 +6,13 @@
 }
 
 body {
-    background: linear-gradient(to bottom, #1a1a1a, #0b0b0b);
-    font-family: "Poppins", sans-serif;
-    color: #fff;
-    padding: 18px;
+    background: linear-gradient(to bottom, #181818, #0b0b0b);
+    font-family: Poppins, sans-serif;
+    color: white;
+    padding: 20px;
 }
 
-/* HEADER */
+/* Header */
 .header {
     text-align: center;
     margin-bottom: 20px;
@@ -20,185 +20,186 @@ body {
 .header h1 {
     color: #ffdd55;
     font-size: 32px;
-    text-shadow: 0 0 10px rgba(255, 221, 85, 0.9);
+    text-shadow: 0 0 12px rgba(255,221,85,.9);
 }
 .header p {
     opacity: .7;
 }
 
-/* GOLD BUTTON */
+/* Gold Buttons */
 .top-buttons {
     display: flex;
     justify-content: center;
-    gap: 14px;
-    margin-bottom: 22px;
+    gap: 16px;
+    margin-bottom: 20px;
 }
 .btn-gold {
     background: linear-gradient(135deg, #ffdd55, #e6c132);
-    color: #000;
-    padding: 10px 20px;
-    border-radius: 8px;
+    padding: 10px 18px;
+    border-radius: 10px;
     font-weight: 700;
+    color: black;
     text-decoration: none;
-    box-shadow: 0 0 15px rgba(255,221,85,.6);
-    transition: .2s;
-}
-.btn-gold:hover {
-    background: #ffe77a;
-    transform: translateY(-2px);
+    box-shadow: 0 0 15px rgba(255,221,85,.5);
 }
 
-/* SLIDER */
+/* Slider */
 .slider-container {
     overflow: hidden;
-    border-radius: 14px;
+    border-radius: 12px;
     margin-bottom: 20px;
-    border: 1px solid rgba(255,221,85,0.25);
+    border: 1px solid rgba(255,221,85,.3);
 }
 .slider-track {
     display: flex;
-    transition: .5s ease;
-}
-.slide img {
-    width: 100%;
-    height: 170px;
-    object-fit: cover;
-    border-radius: 14px;
+    transition: .6s;
 }
 .slide {
     min-width: 100%;
     position: relative;
 }
+.slide img {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+}
 .slide-text {
     position: absolute;
     bottom: 10px;
     left: 10px;
-    background: rgba(0,0,0,.5);
-    padding: 6px 12px;
-    border-radius: 6px;
-    font-size: 14px;
+    background: rgba(0,0,0,.4);
+    padding: 5px 10px;
     color: #ffdd55;
-    font-weight: 700;
+    border-radius: 6px;
 }
+
+/* Dots */
 .slider-dots {
     text-align: center;
-    margin-top: 10px;
+    margin-top: 8px;
 }
 .dot {
-    display: inline-block;
     width: 10px;
     height: 10px;
-    margin: 4px;
+    display: inline-block;
     background: rgba(255,255,255,.4);
     border-radius: 50%;
+    margin: 4px;
 }
 .dot.active {
     background: #ffdd55;
-    box-shadow: 0 0 8px #ffdd55;
 }
 
-/* SPECIAL STRIP */
+/* Special Strip */
 .special-strip {
-    background: linear-gradient(135deg, #ffb84d, #ffdd55);
-    padding: 12px;
+    background: linear-gradient(135deg, #ffb84d, #ffe680);
+    color: black;
     text-align: center;
-    border-radius: 10px;
+    padding: 12px;
     font-weight: 700;
-    color: #000;
-    margin: 18px 0;
-    box-shadow: 0 0 18px rgba(255,221,85,.8);
-    font-size: 16px;
+    margin: 16px 0;
+    border-radius: 8px;
+    box-shadow: 0 0 20px rgba(255,221,85,.6);
 }
 
-/* LOGO GRID */
-.logo-grid {
-    display: grid;
-    grid-template-columns: repeat(2,1fr);
-    gap: 14px;
-    margin-bottom: 20px;
-}
-.logo-grid img {
+/* Full Width Logo Strip */
+#logo-strip img {
     width: 100%;
-    height: 80px;
+    height: 100px;
     object-fit: contain;
-    background: rgba(255,255,255,0.08);
+    margin-bottom: 20px;
     border: 1px solid rgba(255,221,85,.3);
-    border-radius: 10px;
+    background: rgba(255,255,255,.06);
+    border-radius: 12px;
     padding: 10px;
-    box-shadow: 0 0 12px rgba(255,221,85,.25);
 }
 
-/* PROVIDER */
+/* Provider Bar */
 .provider-bar {
     display: flex;
-    gap: 10px;
+    gap: 12px;
     overflow-x: auto;
     margin-bottom: 20px;
 }
 .provider {
-    padding: 8px 15px;
-    background: #2a2a2a;
+    padding: 8px 16px;
     border-radius: 20px;
-    border: 1px solid rgba(255,221,85,.2);
+    background: #272727;
+    border: 1px solid rgba(255,221,85,.3);
     cursor: pointer;
+    white-space: nowrap;
 }
-.provider.active,
-.provider:hover {
+.provider.active {
     background: #ffdd55;
-    color: #000;
+    color: black;
+    font-weight: 700;
 }
 
-/* CARD */
-.rtp-list {
-    display: flex;
-    flex-direction: column;
+/* GAME GRID */
+.game-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
     gap: 14px;
 }
+
+/* Game Card */
 .card {
-    display: flex;
-    background: rgba(255,255,255,0.06);
+    background: rgba(255,255,255,.06);
     border: 1px solid rgba(255,221,85,.25);
-    border-radius: 14px;
-    overflow: hidden;
-    box-shadow: 0 0 12px rgba(255,221,85,.15);
+    border-radius: 12px;
+    padding: 10px;
+    text-align: center;
     transition: .2s;
 }
 .card:hover {
-    box-shadow: 0 0 20px rgba(255,221,85,.35);
-}
-.card img {
-    width: 140px;
-    object-fit: cover;
-}
-.card-content {
-    padding: 12px;
-    width: 100%;
-}
-.card-content h2 {
-    font-size: 17px;
-    font-weight: 600;
-}
-.provider-tag {
-    opacity: .7;
-    font-size: 13px;
-    margin-top: 4px;
-}
-.rtp-badge {
-    align-self: center;
-    margin-right: 16px;
-    background: #ffdd55;
-    color: #000;
-    padding: 6px 14px;
-    border-radius: 10px;
-    font-weight: 700;
-    font-size: 20px;
-    box-shadow: 0 0 12px #ffdd55;
+    transform: translateY(-3px);
 }
 
-/* FOOTER */
+/* Game Image */
+.card img {
+    width: 100%;
+    height: 90px;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+/* Game Name */
+.game-name {
+    margin-top: 6px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+/* RTP BAR */
+.rtp-bar-container {
+    margin-top: 6px;
+    height: 8px;
+    background: #333;
+    border-radius: 6px;
+    overflow: hidden;
+}
+.rtp-bar {
+    height: 100%;
+    border-radius: 6px;
+    transition: width .4s;
+}
+
+/* Color Logic */
+.rtp-red { background: #ff4d4d; }
+.rtp-yellow { background: #ffcc33; }
+.rtp-green { background: #4cd964; }
+
+/* RTP Text */
+.rtp-text {
+    margin-top: 4px;
+    font-size: 13px;
+    font-weight: 700;
+    color: #ffdd55;
+}
+
+/* Footer */
 .footer {
     text-align: center;
-    margin-top: 25px;
+    margin-top: 20px;
     opacity: .5;
-    font-size: 13px;
 }
