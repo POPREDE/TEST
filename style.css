@@ -6,27 +6,59 @@ body {
     color: white;
 }
 
-/* HEADER */
+/* ======================================
+   HEADER BAR WITH CENTER BIG LOGO
+   ====================================== */
+
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: #111;
-    padding: 12px 15px;
+    padding: 10px 14px;
     border-bottom: 1px solid #222;
 }
-.header-logo img {
-    height: 40px;
-    object-fit: contain;
-}
+
+/* BUTTON */
 .header-btn {
-    padding: 8px 12px;
+    padding: 8px 14px;
     background: gold;
     color: black;
     font-weight: bold;
     border-radius: 8px;
     text-decoration: none;
+    font-size: 14px;
+    white-space: nowrap;
 }
+
+/* LOGO WRAPPER */
+.header-logo {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    pointer-events: none;
+}
+
+/* LOGO SIZE */
+.header-logo img {
+    height: 46px;             /* DEFAULT SIZE */
+    object-fit: contain;
+}
+
+/* TABLET */
+@media (min-width: 600px) {
+    .header-logo img {
+        height: 55px;         /* SLIGHTLY BIGGER */
+    }
+}
+
+/* PC */
+@media (min-width: 1024px) {
+    .header-logo img {
+        height: 65px;         /* BIGGER ON PC */
+    }
+}
+
 
 /* ======================================
    BANNER LEVEL 4 — MULTI SLIDE + LOOP
@@ -184,3 +216,4 @@ body {
     margin-top: 5px;
     font-size: 12px;
 }
+
