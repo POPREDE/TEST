@@ -2,7 +2,7 @@ name: Update RTP JSON
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # setiap 5 menit
+    - cron: "*/5 * * * *"
   workflow_dispatch:
 
 jobs:
@@ -18,35 +18,47 @@ jobs:
           node << 'EOF'
           const fs = require("fs");
 
-          function shuffle(a) {
-            for (let i = a.length - 1; i > 0; i--) {
-              const j = Math.floor(Math.random() * (i + 1));
-              [a[i], a[j]] = [a[j], a[i]];
-            }
-            return a;
+          function shuffle(arr) {
+              for (let i = arr.length - 1; i > 0; i--) {
+                  const j = Math.floor(Math.random() * (i + 1));
+                  [arr[i], arr[j]] = [arr[j], arr[i]];
+              }
+              return arr;
           }
 
-          function generateRTP(count) {
-            const arr = [];
-            const top = Math.floor(Math.random() * 2) + 3; // 3-4 game 98%
-            for (let i = 0; i < top; i++) arr.push(98);
-
-            for (let i = 0; i < 10; i++) arr.push(Math.floor(Math.random()*8)+90);
-
-            while (arr.length < count) arr.push(Math.floor(Math.random()*40)+50);
-
-            return shuffle(arr);
+          function rand(min, max) {
+              return parseFloat((Math.random() * (max - min) + min).toFixed(1));
           }
 
-          const total_pg = 200;         // kamu bisa sesuaikan
-          const total_prag = 200;
+          function generateRTP(totalGames) {
+              let result = [];
+
+              const above90 = Math.floor(Math.random() * 3) + 3; // 3–5
+              for (let i = 0; i < above90; i++) {
+                  result.push(rand(90.0, 99.9));
+              }
+
+              const under70 = Math.floor(Math.random() * 6) + 10; // 10–15
+              for (let i = 0; i < under70; i++) {
+                  result.push(rand(50.0, 69.9));
+              }
+
+              while (result.length < totalGames) {
+                  result.push(rand(70.0, 89.9));
+              }
+
+              return shuffle(result);
+          }
+
+          const total_pg = 200;      
+          const total_prag = 200;    
 
           const newData = {
-            generated_at: new Date().toISOString(),
-            provider: {
-              PG: generateRTP(total_pg),
-              PRAGMATIC: generateRTP(total_prag)
-            }
+              generated_at: new Date().toISOString(),
+              provider: {
+                  PG: generateRTP(total_pg),
+                  PRAGMATIC: generateRTP(total_prag)
+              }
           };
 
           fs.writeFileSync("rtp.json", JSON.stringify(newData, null, 2));
