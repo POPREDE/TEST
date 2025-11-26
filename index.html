@@ -12,10 +12,22 @@
 
     <header class="header">
         <h1>RTP LIVE PREMIUM</h1>
-        <p>Auto update setiap 5 menit • Reset harian 00:00</p>
+        <p>Auto update 5 menit • Reset harian 00:00</p>
     </header>
 
-    <!-- Provider Filter -->
+    <!-- REGISTER / LOGIN BUTTONS -->
+    <div class="top-buttons">
+        <a id="btn-register" class="btn-gold" href="#" target="_blank">REGISTER</a>
+        <a id="btn-login" class="btn-gold" href="#" target="_blank">LOGIN</a>
+    </div>
+
+    <!-- SLIDER BANNER -->
+    <div class="slider-container">
+        <div id="slider-track" class="slider-track"></div>
+        <div id="slider-dots" class="slider-dots"></div>
+    </div>
+
+    <!-- PROVIDER BUTTONS -->
     <div class="provider-bar">
         <button class="provider active" data-provider="ALL">Semua</button>
         <button class="provider" data-provider="PRAGMATIC">Pragmatic</button>
@@ -24,6 +36,7 @@
         <button class="provider" data-provider="HABANERO">Habanero</button>
     </div>
 
+    <!-- GAME LIST -->
     <main>
         <div id="rtp-container" class="rtp-list"></div>
     </main>
