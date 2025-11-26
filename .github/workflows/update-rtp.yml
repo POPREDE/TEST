@@ -18,6 +18,24 @@ jobs:
           node << 'EOF'
           const fs = require("fs");
 
+          const fetch = (...args) =>
+            import('node-fetch').then(({default: fetch}) => fetch(...args));
+
+          const GAME_CSV =
+            "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv";
+
+          async function loadGames() {
+              const res = await fetch(GAME_CSV);
+              const txt = await res.text();
+              const rows = txt.split("\n").map(r => r.split(","));
+              const headers = rows.shift().map(h => h.trim());
+              return rows.map(r => {
+                  let o = {};
+                  r.forEach((v, i) => o[headers[i]] = v.trim());
+                  return o;
+              });
+          }
+
           function shuffle(arr) {
               for (let i = arr.length - 1; i > 0; i--) {
                   const j = Math.floor(Math.random() * (i + 1));
@@ -30,44 +48,47 @@ jobs:
               return parseFloat((Math.random() * (max - min) + min).toFixed(1));
           }
 
-          function generateRTP(totalGames) {
+          function generateRTP(total) {
               let result = [];
 
-              const above90 = Math.floor(Math.random() * 3) + 3; // 3–5
-              for (let i = 0; i < above90; i++) {
-                  result.push(rand(90.0, 99.9));
-              }
+              // Above 90 (max 5)
+              const above90 = Math.min(Math.floor(Math.random() * 3) + 3, total);
+              for (let i = 0; i < above90; i++) result.push(rand(90.0, 99.9));
 
-              const under70 = Math.floor(Math.random() * 6) + 10; // 10–15
-              for (let i = 0; i < under70; i++) {
-                  result.push(rand(50.0, 69.9));
-              }
+              // Under 70 (max 15)
+              const under70 = Math.min(Math.floor(Math.random() * 6) + 10, total - result.length);
+              for (let i = 0; i < under70; i++) result.push(rand(50.0, 69.9));
 
-              while (result.length < totalGames) {
+              // Remaining 70–89.9
+              while (result.length < total) {
                   result.push(rand(70.0, 89.9));
               }
 
               return shuffle(result);
           }
 
-          const total_pg = 200;      
-          const total_prag = 200;    
+          (async () => {
+              const allGames = await loadGames();
 
-          const newData = {
-              generated_at: new Date().toISOString(),
-              provider: {
-                  PG: generateRTP(total_pg),
-                  PRAGMATIC: generateRTP(total_prag)
-              }
-          };
+              const pgCount = allGames.filter(g => g.provider === "PG").length;
+              const pragmaticCount = allGames.filter(g => g.provider === "PRAGMATIC").length;
 
-          fs.writeFileSync("rtp.json", JSON.stringify(newData, null, 2));
+              const data = {
+                  generated_at: new Date().toISOString(),
+                  provider: {
+                      PG: generateRTP(pgCount),
+                      PRAGMATIC: generateRTP(pragmaticCount)
+                  }
+              };
+
+              fs.writeFileSync("rtp.json", JSON.stringify(data, null, 2));
+          })();
           EOF
 
-      - name: Commit file
+      - name: Commit RTP
         run: |
           git config --global user.name  "github-actions"
           git config --global user.email "actions@github.com"
           git add rtp.json
-          git commit -m "Auto update RTP" || echo "No changes"
+          git commit -m "Auto-update RTP" || echo "No changes"
           git push
