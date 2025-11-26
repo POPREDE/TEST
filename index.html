@@ -2,77 +2,36 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta 
-        name="viewport" 
-        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-    >
-    <title>VN FOOD</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RTP Live – Premium Gold</title>
 
     <link rel="stylesheet" href="style.css">
-    <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
+
 <body>
 
-<header id="header" class="hero">
-    <img src="https://ik.imagekit.io/vs2btsn6j/LOGO?updatedAt=1764115415618" class="logo">
-    <h1>VN FOOD</h1>
-</header>
+    <header class="header">
+        <h1>RTP LIVE PREMIUM</h1>
+        <p>Auto update setiap 5 menit • Reset harian 00:00</p>
+    </header>
 
-<div id="highlightToggle" class="highlight-toggle" onclick="toggleHighlightMenu()">⭐</div>
-
-<div id="highlightMenu" class="highlight-menu">
-    <div id="highlightSlider"></div>
-</div>
-
-<div class="bottom-nav">
-    <button class="nav-btn" onclick="openSearchPage()">🔍</button>
-    <button class="nav-btn" onclick="openHome()">🏠</button>
-    <button class="nav-btn" onclick="openCategoryPage()">📦</button>
-</div>
-
-<div id="homePage" class="page active">
-    <div class="grid-container">
-        <div class="grid" id="productGrid"></div>
-    </div>
-</div>
-
-<div id="searchPage" class="page">
-    <div class="search-head">
-        <button class="close-search-page" onclick="openHome()">✖</button>
-        <input 
-            type="text" 
-            id="searchInput" 
-            placeholder="Search items..."
-            onkeyup="applySearchPage()"
-        >
+    <!-- Provider Filter -->
+    <div class="provider-bar">
+        <button class="provider active" data-provider="ALL">Semua</button>
+        <button class="provider" data-provider="PRAGMATIC">Pragmatic</button>
+        <button class="provider" data-provider="PG">PG Soft</button>
+        <button class="provider" data-provider="JILI">Jili</button>
+        <button class="provider" data-provider="HABANERO">Habanero</button>
     </div>
 
-    <div class="grid-container">
-        <div class="grid" id="searchGrid"></div>
-    </div>
-</div>
+    <main>
+        <div id="rtp-container" class="rtp-list"></div>
+    </main>
 
-<div id="categoryPage" class="page">
-    <button class="top-back-btn" onclick="openHome()">← Back to Home</button>
-    <h2 class="page-title">Select Category</h2>
+    <footer class="footer">
+        © Rede POP • Premium Gold UI Level 3
+    </footer>
 
-    <div id="categoryList" class="category-list"></div>
-</div>
-
-<div id="categoryItemPage" class="page">
-    <button class="top-back-btn" onclick="openCategoryPage()">← Back Categories</button>
-
-    <h2 class="page-title" id="categoryTitle"></h2>
-
-    <div class="grid-container">
-        <div class="grid" id="categoryGrid"></div>
-    </div>
-</div>
-
-<div id="imageViewer" class="image-viewer" onclick="closeImageViewer()">
-    <img id="viewerImg">
-</div>
-
-<script src="script.js"></script>
+    <script src="script.js"></script>
 </body>
 </html>
