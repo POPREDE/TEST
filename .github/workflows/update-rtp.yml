@@ -13,28 +13,29 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v3
 
-      - name: Generate RTP JSON
+      - name: Download Game CSV via cURL (100% success)
+        run: |
+          curl -L \
+          "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv" \
+          -o gamelist.csv
+
+      - name: Generate RTP JSON (no node-fetch, no errors)
         run: |
           node << 'EOF'
           const fs = require("fs");
 
-          const fetch = (...args) =>
-            import('node-fetch').then(({default: fetch}) => fetch(...args));
+          const csv = fs.readFileSync("gamelist.csv", "utf8");
+          const rows = csv.trim().split("\n").map(r => r.split(","));
 
-          const GAME_CSV =
-            "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv";
+          const headers = rows.shift().map(h => h.trim());
+          const games = rows.map(r => {
+              let o={};
+              r.forEach((v,i)=> o[headers[i]] = v.trim());
+              return o;
+          });
 
-          async function loadGames() {
-              const res = await fetch(GAME_CSV);
-              const txt = await res.text();
-              const rows = txt.split("\n").map(r => r.split(","));
-              const headers = rows.shift().map(h => h.trim());
-              return rows.map(r => {
-                  let o = {};
-                  r.forEach((v, i) => o[headers[i]] = v.trim());
-                  return o;
-              });
-          }
+          const pgCount = games.filter(g => g.provider === "PG").length;
+          const pragCount = games.filter(g => g.provider === "PRAGMATIC").length;
 
           function shuffle(arr) {
               for (let i = arr.length - 1; i > 0; i--) {
@@ -51,44 +52,32 @@ jobs:
           function generateRTP(total) {
               let result = [];
 
-              // Above 90 (max 5)
-              const above90 = Math.min(Math.floor(Math.random() * 3) + 3, total);
-              for (let i = 0; i < above90; i++) result.push(rand(90.0, 99.9));
+              const above90 = Math.min(Math.floor(Math.random()*3)+3, total);
+              for (let i=0;i<above90;i++) result.push(rand(90.0, 99.9));
 
-              // Under 70 (max 15)
-              const under70 = Math.min(Math.floor(Math.random() * 6) + 10, total - result.length);
-              for (let i = 0; i < under70; i++) result.push(rand(50.0, 69.9));
+              const under70 = Math.min(Math.floor(Math.random()*6)+10, total - result.length);
+              for (let i=0;i<under70;i++) result.push(rand(50.0, 69.9));
 
-              // Remaining 70–89.9
-              while (result.length < total) {
-                  result.push(rand(70.0, 89.9));
-              }
+              while(result.length < total) result.push(rand(70.0, 89.9));
 
               return shuffle(result);
           }
 
-          (async () => {
-              const allGames = await loadGames();
+          const data = {
+              generated_at: new Date().toISOString(),
+              provider: {
+                  PG: generateRTP(pgCount),
+                  PRAGMATIC: generateRTP(pragCount)
+              }
+          };
 
-              const pgCount = allGames.filter(g => g.provider === "PG").length;
-              const pragmaticCount = allGames.filter(g => g.provider === "PRAGMATIC").length;
-
-              const data = {
-                  generated_at: new Date().toISOString(),
-                  provider: {
-                      PG: generateRTP(pgCount),
-                      PRAGMATIC: generateRTP(pragmaticCount)
-                  }
-              };
-
-              fs.writeFileSync("rtp.json", JSON.stringify(data, null, 2));
-          })();
+          fs.writeFileSync("rtp.json", JSON.stringify(data, null, 2));
           EOF
 
-      - name: Commit RTP
+      - name: Commit JSON
         run: |
           git config --global user.name  "github-actions"
           git config --global user.email "actions@github.com"
           git add rtp.json
-          git commit -m "Auto-update RTP" || echo "No changes"
+          git commit -m "Auto update RTP" || echo "No changes"
           git push
