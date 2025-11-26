@@ -13,7 +13,7 @@
 </head>
 <body>
 
-<!-- HEADER (HILANG SAAT CATEGORY PAGE) -->
+<!-- HEADER (MUNCUL HANYA DI HOME) -->
 <header id="header" class="hero">
     <img src="https://ik.imagekit.io/vs2btsn6j/LOGO?updatedAt=1764115415618" class="logo">
     <h1>VN FOOD</h1>
@@ -29,17 +29,9 @@
     <div id="highlightSlider"></div>
 </div>
 
-<!-- 🔍 SEARCH OVERLAY -->
-<div id="searchOverlay" class="search-overlay">
-    <div class="search-panel">
-        <input type="text" id="searchInput" placeholder="Search..." onkeyup="applyFilters()">
-        <button class="close-overlay" onclick="closeSearchOverlay()">✖</button>
-    </div>
-</div>
-
-<!-- BOTTOM NAVIGATION (NOW INCLUDES SEARCH BUTTON) -->
+<!-- 🔽 BOTTOM NAV -->
 <div class="bottom-nav">
-    <button class="nav-btn" onclick="openSearchOverlay()">🔍</button>
+    <button class="nav-btn" onclick="openSearchPage()">🔍</button>
     <button class="nav-btn" onclick="openHome()">🏠</button>
     <button class="nav-btn" onclick="openCategoryPage()">📦</button>
 </div>
@@ -51,15 +43,26 @@
     </div>
 </div>
 
-<!-- 📦 CATEGORY LIST PAGE -->
+<!-- 🔍 SEARCH PAGE -->
+<div id="searchPage" class="page">
+    <div class="search-head">
+        <button class="close-search-page" onclick="openHome()">✖</button>
+        <input type="text" id="searchInput" placeholder="Search items..." onkeyup="applySearchPage()">
+    </div>
+    <div class="grid-container">
+        <div class="grid" id="searchGrid"></div>
+    </div>
+</div>
+
+<!-- 📦 CATEGORY PAGE -->
 <div id="categoryPage" class="page">
     <button class="top-back-btn" onclick="openHome()">← Back to Home</button>
-
     <h2 class="page-title">Select Category</h2>
+
     <div id="categoryList" class="category-list"></div>
 </div>
 
-<!-- 📂 CATEGORY ITEMS PAGE -->
+<!-- 📂 CATEGORY ITEM PAGE -->
 <div id="categoryItemPage" class="page">
     <button class="top-back-btn" onclick="openCategoryPage()">← Back Categories</button>
 
