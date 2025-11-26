@@ -24,8 +24,7 @@ Papa.parse(SHEET_HIGHLIGHT, {
                         <div class="h-title">${item.name}</div>
                         <div class="h-price">${item.price || ""}</div>
                     </div>
-                </div>
-            `;
+                </div>`;
         });
     }
 });
@@ -37,7 +36,7 @@ Papa.parse(SHEET_PRODUCTS, {
     complete: res => {
         allProducts = res.data.filter(p => p.name);
 
-        /* detect category automatically */
+        /* generate unique categories */
         categories = [...new Set(allProducts.map(p => p.category))].filter(Boolean);
 
         renderProducts(allProducts);
@@ -45,7 +44,7 @@ Papa.parse(SHEET_PRODUCTS, {
     }
 });
 
-/* RENDER HOME PRODUCTS */
+/* HOME PRODUCTS */
 function renderProducts(list) {
     const grid = document.getElementById("productGrid");
     grid.innerHTML = "";
@@ -56,28 +55,25 @@ function renderProducts(list) {
                 <img src="${p.img_url}" onclick="openImageViewer('${p.img_url}')">
                 <div class="name">${p.name}</div>
                 <div class="price">${p.price}</div>
-            </div>
-        `;
+            </div>`;
     });
 }
 
-/* RENDER CATEGORY LIST */
+/* CATEGORY LIST */
 function renderCategories() {
     const list = document.getElementById("categoryList");
     list.innerHTML = "";
 
     categories.forEach(c => {
         list.innerHTML += `
-            <div class="category-item" onclick="openCategory('${c}')">${c}</div>
-        `;
+            <div class="category-item" onclick="openCategory('${c}')">${c}</div>`;
     });
 }
 
-/* SHOW CATEGORY PRODUCTS */
+/* CATEGORY DETAIL */
 function openCategory(cat) {
     document.getElementById("categoryPage").classList.remove("active");
     document.getElementById("categoryItemPage").classList.add("active");
-
     document.getElementById("categoryTitle").innerText = cat;
 
     const grid = document.getElementById("categoryGrid");
@@ -91,8 +87,7 @@ function openCategory(cat) {
                     <img src="${p.img_url}" onclick="openImageViewer('${p.img_url}')">
                     <div class="name">${p.name}</div>
                     <div class="price">${p.price}</div>
-                </div>
-            `;
+                </div>`;
         });
 }
 
@@ -101,7 +96,6 @@ function openHome() {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
     document.getElementById("homePage").classList.add("active");
 }
-
 function openCategoryPage() {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
     document.getElementById("categoryPage").classList.add("active");
@@ -112,23 +106,21 @@ function applyFilters() {
     let q = document.getElementById("searchInput").value.toLowerCase();
     renderProducts(allProducts.filter(p => p.name.toLowerCase().includes(q)));
 }
-
 function closeSearch() {
     document.getElementById("searchInput").value = "";
     renderProducts(allProducts);
 }
 
-/* HIGHLIGHT MENU */
+/* ⭐ HIGHLIGHT */
 function toggleHighlightMenu() {
     document.getElementById("highlightMenu").classList.toggle("open");
 }
 
-/* IMAGE VIEWER */
+/* 🔍 IMAGE VIEWER */
 function openImageViewer(src) {
     document.getElementById("viewerImg").src = src;
     document.getElementById("imageViewer").style.display = "flex";
 }
-
 function closeImageViewer() {
     document.getElementById("imageViewer").style.display = "none";
 }
