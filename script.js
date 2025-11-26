@@ -7,34 +7,34 @@ const SHEET_HIGHLIGHT =
 let allProducts = [];
 let categories = [];
 
-/* ⭐ HIGHLIGHT LOAD */
+/* ⭐ Highlight Load */
 Papa.parse(SHEET_HIGHLIGHT, {
     download: true,
     header: true,
-    complete: out => {
+    complete: res => {
         const box = document.getElementById("highlightSlider");
 
-        out.data.forEach(i => {
-            if (!i.img_url) return;
+        res.data.forEach(item => {
+            if (!item.img_url) return;
 
             box.innerHTML += `
-                <div class="highlight-item" onclick="openImageViewer('${i.img_url}')">
-                    <img src="${i.img_url}">
+                <div class="highlight-item" onclick="openImageViewer('${item.img_url}')">
+                    <img src="${item.img_url}">
                     <div>
-                        <div class="h-title">${i.name}</div>
-                        <div class="h-price">${i.price || ""}</div>
+                        <div class="h-title">${item.name}</div>
+                        <div class="h-price">${item.price || ""}</div>
                     </div>
                 </div>`;
         });
     }
 });
 
-/* PRODUCT LOAD */
+/* Load Products */
 Papa.parse(SHEET_PRODUCTS, {
     download: true,
     header: true,
-    complete: out => {
-        allProducts = out.data.filter(p => p.name);
+    complete: res => {
+        allProducts = res.data.filter(p => p.name);
         categories = [...new Set(allProducts.map(p => p.category))].filter(Boolean);
 
         renderProducts(allProducts);
@@ -42,10 +42,11 @@ Papa.parse(SHEET_PRODUCTS, {
     }
 });
 
-/* ===== RENDER HOME ===== */
+/* ===== HOME GRID ===== */
 function renderProducts(list) {
     const grid = document.getElementById("productGrid");
     grid.innerHTML = "";
+
     list.forEach(p => {
         grid.innerHTML += `
             <div class="item">
@@ -56,20 +57,22 @@ function renderProducts(list) {
     });
 }
 
-/* ====== CATEGORY LIST ====== */
+/* ===== CATEGORY LIST ===== */
 function renderCategories() {
-    const box = document.getElementById("categoryList");
-    box.innerHTML = "";
+    const list = document.getElementById("categoryList");
+    list.innerHTML = "";
+
     categories.forEach(c => {
-        box.innerHTML += `
+        list.innerHTML += `
             <div class="category-item" onclick="openCategory('${c}')">${c}</div>`;
     });
 }
 
-/* ====== CATEGORY ITEM PAGE ====== */
+/* ===== CATEGORY ITEM PAGE ===== */
 function openCategory(cat) {
     hideHeader();
     showPage("categoryItemPage");
+
     document.getElementById("categoryTitle").innerText = cat;
 
     const grid = document.getElementById("categoryGrid");
@@ -87,22 +90,28 @@ function openCategory(cat) {
         });
 }
 
-/* ===== PAGE SWITCHER ===== */
+/* ===== PAGE SWITCH ===== */
 function showPage(id) {
     document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
     document.getElementById(id).classList.add("active");
 }
+
 function openHome() {
     showHeader();
     showPage("homePage");
 }
+
 function openCategoryPage() {
     hideHeader();
     showPage("categoryPage");
 }
+
 function openSearchPage() {
     hideHeader();
     showPage("searchPage");
+
+    document.getElementById("searchInput").value = "";
+    document.getElementById("searchGrid").innerHTML = "";
 }
 
 /* ===== HEADER CONTROL ===== */
@@ -132,7 +141,7 @@ function applySearchPage() {
         });
 }
 
-/* ===== HIGHLIGHT MENU ===== */
+/* ⭐ Highlight Toggle */
 function toggleHighlightMenu() {
     document.getElementById("highlightMenu").classList.toggle("open");
 }
