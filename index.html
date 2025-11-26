@@ -5,55 +5,48 @@
     <title>POP REDE RTP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- CSS -->
     <link rel="stylesheet" href="style.css">
-
 </head>
 <body>
 
-    <!-- NAVBAR -->
-    <header class="navbar">
-        <div class="logo">POP REDE RTP</div>
+    <!-- HEADER -->
+    <header class="header">
+        <a id="btn-register" class="header-btn">REGISTER</a>
 
-        <div class="nav-buttons">
-            <a id="btn-register" class="nav-btn">REGISTER</a>
-            <a id="btn-login" class="nav-btn">LOGIN</a>
+        <div class="header-logo">
+            <img id="logo-poprede" src="" alt="logo">
         </div>
+
+        <a id="btn-login" class="header-btn">LOGIN</a>
     </header>
 
+    <!-- BANNER -->
+    <section class="banner-section">
+        <div class="banner-slider">
+            <div id="banner-track" class="banner-track"></div>
+        </div>
 
-  <!-- BANNER SLIDER -->
-<section class="banner-section">
-    <div class="banner-slider">
-        <div id="banner-track" class="banner-track"></div>
-    </div>
-    <div id="banner-captions" class="banner-captions"></div>
-    <div id="banner-dots" class="banner-dots"></div>
-</section>
+        <div id="banner-caption" class="banner-caption"></div>
+        <div id="banner-dots" class="banner-dots"></div>
+    </section>
 
-
-    <!-- PROVIDER TITLE -->
+    <!-- TITLE -->
     <div class="provider-title">
         POPBIS RTP PRAGMATIC PLAY & PG SOFT
     </div>
 
-    <!-- LOGO STRIP (2 LOGO WIDTH FIXED) -->
+    <!-- LOGO STRIP (2 LOGO) -->
     <div id="logo-strip" class="logo-strip"></div>
 
-
-    <!-- PROVIDER SWITCHER -->
+    <!-- PROVIDER SWITCH -->
     <div class="provider-switch">
         <button class="provider active" data-provider="PG" id="default-provider">PG SOFT</button>
         <button class="provider" data-provider="PRAGMATIC">PRAGMATIC PLAY</button>
     </div>
 
-
     <!-- GAME GRID -->
     <div id="game-grid"></div>
 
-
-    <!-- JS -->
     <script src="script.js"></script>
 </body>
 </html>
-
