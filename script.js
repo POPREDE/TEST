@@ -1,12 +1,11 @@
 //------------------------------------------------------------
-// CSV SOURCES (FINAL FROM USER)
+// CSV SOURCES (FINAL)
 //------------------------------------------------------------
 const GAME_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv";
 const LINK_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=1888859615&single=true&output=csv";
 const BANNER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=773368200&single=true&output=csv";
 
-// LOGO GRID — ambil 2 banner pertama sebagai logo
-const LOGO_SOURCE = BANNER_CSV;
+const LOGO_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?output=csv";
 
 
 //------------------------------------------------------------
@@ -28,53 +27,51 @@ async function fetchCSV(url) {
 
 
 //------------------------------------------------------------
-// RTP SYSTEM
+// RTP GENERATOR PER GAME
 //------------------------------------------------------------
-const MIN_DAILY = 50;
-const MAX_DAILY = 98;
-const MIN_CHANGE = 0.1;
-const MAX_CHANGE = 1;
-const INTERVAL = 5 * 60 * 1000;
-const STORAGE_KEY = "rtpPremium";
+function generateRTPList(games) {
+    const total = games.length;
 
-function loadRTP() {
-    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
-    const today = new Date().getDate();
+    // 3–4 game = 98%
+    const high98 = Math.floor(Math.random() * 2) + 3;
 
-    if (!saved) {
-        const base = randomDaily();
-        saveRTP(base, base, today);
-        return {base,rtp:base,today};
+    // 10 game = 90–97
+    const highRange = 10;
+
+    let arr = [];
+
+    // 98% games
+    for (let i = 0; i < high98; i++) {
+        arr.push(98);
     }
 
-    if (saved.today !== today) {
-        const base = randomDaily();
-        saveRTP(base, base, today);
-        return {base,rtp:base,today};
+    // 90–97%
+    for (let i = 0; i < highRange; i++) {
+        arr.push( Math.floor(Math.random() * 8) + 90 );
     }
 
-    return saved;
-}
-function saveRTP(base, rtp, today) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({base,rtp,today}));
-}
-function randomDaily() {
-    return Number((Math.random()*(MAX_DAILY-MIN_DAILY)+MIN_DAILY).toFixed(2));
-}
-function randomMinuteChange() {
-    return Number((Math.random()*(MAX_CHANGE-MIN_CHANGE)+MIN_CHANGE).toFixed(2));
-}
-function updateRTP() {
-    let data = loadRTP();
-    let rtp = data.rtp;
+    // Sisanya 50–89%
+    while (arr.length < total) {
+        arr.push( Math.floor(Math.random() * 40) + 50 );
+    }
 
-    const dir = Math.random() < 0.5 ? -1 : 1;
-    rtp = Number((rtp + dir * randomMinuteChange()).toFixed(2));
+    // Shuffle
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random()* (i+1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
 
-    if (rtp > 99.9) rtp = 99.9;
-    if (rtp < 30) rtp = 30;
+    return arr;
+}
 
-    saveRTP(data.base, rtp, data.today);
+
+//------------------------------------------------------------
+// COLOR LOGIC
+//------------------------------------------------------------
+function getColorClass(rtp) {
+    if (rtp >= 90) return "rtp-green";
+    if (rtp >= 70) return "rtp-yellow";
+    return "rtp-red";
 }
 
 
@@ -83,8 +80,8 @@ function updateRTP() {
 //------------------------------------------------------------
 async function loadLinks() {
     const list = await fetchCSV(LINK_CSV);
-    document.getElementById("btn-register").href = list.find(x=>x.key==="register")?.value || "#";
-    document.getElementById("btn-login").href    = list.find(x=>x.key==="login")?.value || "#";
+    document.getElementById("btn-register").href = list.find(x=>x.key==="register")?.value;
+    document.getElementById("btn-login").href = list.find(x=>x.key==="login")?.value;
 }
 
 
@@ -94,7 +91,7 @@ async function loadLinks() {
 async function loadBanners() {
     const list = await fetchCSV(BANNER_CSV);
     const track = document.getElementById("slider-track");
-    const dots  = document.getElementById("slider-dots");
+    const dots = document.getElementById("slider-dots");
 
     track.innerHTML = "";
     dots.innerHTML = "";
@@ -105,25 +102,25 @@ async function loadBanners() {
             <img src="${b.banner_url}">
             ${b.banner_text ? `<div class="slide-text">${b.banner_text}</div>` : ""}
         </div>`;
-        dots.innerHTML += `<span class="dot ${i===0?'active':''}" data-id="${i}"></span>`;
+
+        dots.innerHTML += `<span class="dot ${i===0?"active":""}" data-id="${i}"></span>`;
     });
 
     startSlider(list.length);
 }
 
 
-// SLIDER AUTO
+// Slider Logic
 let slideIndex = 0;
 let slideTimer;
 
 function startSlider(total) {
     const track = document.getElementById("slider-track");
-    const dots  = document.querySelectorAll(".dot");
+    const dots = document.querySelectorAll(".dot");
 
     function move(n) {
         slideIndex = (n + total) % total;
         track.style.transform = `translateX(-${slideIndex*100}%)`;
-
         dots.forEach(d=>d.classList.remove("active"));
         dots[slideIndex].classList.add("active");
     }
@@ -144,68 +141,75 @@ function startSlider(total) {
 
 
 //------------------------------------------------------------
-// LOGO GRID (ambil 2 banner pertama)
+// LOGO STRIP (Full Width)
 //------------------------------------------------------------
-async function loadLogoGrid() {
-    const list = await fetchCSV(LOGO_SOURCE);
-    const wrap = document.getElementById("logo-grid");
+async function loadLogoStrip() {
+    const list = await fetchCSV(LOGO_CSV);
+    const wrap = document.getElementById("logo-strip");
 
     wrap.innerHTML = "";
 
-    list.slice(0,2).forEach(b=>{
-        wrap.innerHTML += `<img src="${b.banner_url}">`;
+    list.forEach(logo=>{
+        wrap.innerHTML += `<img src="${logo.logo_url}">`;
     });
 }
 
 
 //------------------------------------------------------------
-// GAME LIST
+// GAME GRID (Provider-Based)
 //------------------------------------------------------------
-async function renderGames(provider="ALL") {
-    const list = await fetchCSV(GAME_CSV);
-    const wrap = document.getElementById("rtp-container");
-    wrap.innerHTML = "";
+async function renderGames(providerSelect="PG") {
+    const allGames = await fetchCSV(GAME_CSV);
+    const games = providerSelect === "ALL"
+        ? allGames
+        : allGames.filter(g => g.provider === providerSelect);
 
-    const rtp = loadRTP().rtp;
+    const grid = document.getElementById("game-grid");
+    grid.innerHTML = "";
 
-    list
-    .filter(g => provider==="ALL" || g.provider===provider)
-    .forEach(g=>{
-        wrap.innerHTML += `
+    const rtpList = generateRTPList(games);
+
+    games.forEach((g, i)=>{
+        const rtp = rtpList[i];
+        const color = getColorClass(rtp);
+
+        grid.innerHTML += `
         <div class="card">
             <img src="${g.image_url}">
-            <div class="card-content">
-                <h2>${g.game_name}</h2>
-                <div class="provider-tag">${g.provider}</div>
+            <div class="game-name">${g.game_name}</div>
+
+            <div class="rtp-bar-container">
+                <div class="rtp-bar ${color}" style="width:${rtp}%;"></div>
             </div>
-            <div class="rtp-badge">${rtp}%</div>
+
+            <div class="rtp-text">${rtp}%</div>
         </div>`;
     });
 }
 
 
 //------------------------------------------------------------
-// PROVIDER BUTTON EVENTS
+// Provider Buttons
 //------------------------------------------------------------
 document.querySelectorAll(".provider").forEach(btn=>{
     btn.onclick = ()=>{
         document.querySelectorAll(".provider").forEach(b=>b.classList.remove("active"));
         btn.classList.add("active");
-        renderGames(btn.dataset.provider);
+
+        const provider = btn.dataset.provider;
+        renderGames(provider);
     };
 });
 
 
 //------------------------------------------------------------
-// RUN EVERYTHING
+// INITIAL LOAD
 //------------------------------------------------------------
 loadLinks();
 loadBanners();
-loadLogoGrid();
-renderGames();
+loadLogoStrip();
 
-setInterval(()=>{
-    updateRTP();
-    const prov = document.querySelector(".provider.active").dataset.provider;
-    renderGames(prov);
-}, INTERVAL);
+document.getElementById("default-provider").classList.add("active");
+renderGames("PG");
+
+console.log("RTP Live Premium Loaded.");
