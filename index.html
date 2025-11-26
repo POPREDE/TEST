@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RTP LIVE PREMIUM GOLD</title>
+    <title>RTP Live Premium</title>
     <link rel="stylesheet" href="style.css">
 </head>
 
@@ -11,39 +11,41 @@
 
     <header class="header">
         <h1>RTP LIVE PREMIUM</h1>
-        <p>Auto update 5 menit • Reset harian 00:00</p>
+        <p>Auto Update 5 Menit · Reset Harian 00:00</p>
     </header>
 
-    <!-- REGISTER / LOGIN BUTTONS -->
+    <!-- Buttons -->
     <div class="top-buttons">
         <a id="btn-register" class="btn-gold" target="_blank">REGISTER</a>
         <a id="btn-login" class="btn-gold" target="_blank">LOGIN</a>
     </div>
 
-    <!-- SLIDER -->
+    <!-- Banner Slider -->
     <div class="slider-container">
         <div id="slider-track" class="slider-track"></div>
         <div id="slider-dots" class="slider-dots"></div>
     </div>
 
-    <!-- SPECIAL STRIP -->
+    <!-- Strip -->
     <div class="special-strip">
         POPBIS RTP – PRAGMATIC PLAY & PG SOFT
     </div>
 
-    <!-- LOGO GRID (2 LOGO) -->
-    <div id="logo-grid" class="logo-grid"></div>
+    <!-- Full-width Logo Strip -->
+    <div id="logo-strip"></div>
 
-    <!-- PROVIDER FILTER -->
+    <!-- Provider Filter -->
     <div class="provider-bar">
-        <button class="provider active" data-provider="ALL">Semua</button>
+        <button class="provider" data-provider="PG" id="default-provider">PG Soft</button>
         <button class="provider" data-provider="PRAGMATIC">Pragmatic</button>
-        <button class="provider" data-provider="PG">PG Soft</button>
+        <button class="provider" data-provider="JILI">JILI</button>
+        <button class="provider" data-provider="HABANERO">Habanero</button>
+        <button class="provider" data-provider="ALL">Semua Provider</button>
     </div>
 
-    <!-- GAME LIST -->
+    <!-- GAME GRID -->
     <main>
-        <div id="rtp-container" class="rtp-list"></div>
+        <div id="game-grid" class="game-grid"></div>
     </main>
 
     <footer class="footer">
