@@ -1,11 +1,11 @@
 //------------------------------------------------------------
-// CSV SOURCES (FINAL)
+// CSV SOURCES
 //------------------------------------------------------------
 const GAME_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv";
 const LINK_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=1888859615&single=true&output=csv";
 const BANNER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=773368200&single=true&output=csv";
 
-const LOGO_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?output=csv";
+const LOGO_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?single=true&output=csv";
 
 
 //------------------------------------------------------------
@@ -32,32 +32,19 @@ async function fetchCSV(url) {
 function generateRTPList(games) {
     const total = games.length;
 
-    // 3–4 game = 98%
-    const high98 = Math.floor(Math.random() * 2) + 3;
-
-    // 10 game = 90–97
-    const highRange = 10;
+    const high98 = Math.floor(Math.random() * 2) + 3; // 3–4 game
+    const highRange = 10; // 10 game 90–97%
 
     let arr = [];
 
-    // 98% games
-    for (let i = 0; i < high98; i++) {
-        arr.push(98);
-    }
+    for (let i = 0; i < high98; i++) arr.push(98);
+    for (let i = 0; i < highRange; i++) arr.push(Math.floor(Math.random()*8)+90);
 
-    // 90–97%
-    for (let i = 0; i < highRange; i++) {
-        arr.push( Math.floor(Math.random() * 8) + 90 );
-    }
+    while (arr.length < total) arr.push(Math.floor(Math.random()*40)+50);
 
-    // Sisanya 50–89%
-    while (arr.length < total) {
-        arr.push( Math.floor(Math.random() * 40) + 50 );
-    }
-
-    // Shuffle
+    // shuffle
     for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random()* (i+1));
+        const j = Math.floor(Math.random()*(i+1));
         [arr[i], arr[j]] = [arr[j], arr[i]];
     }
 
@@ -76,12 +63,12 @@ function getColorClass(rtp) {
 
 
 //------------------------------------------------------------
-// LOAD REGISTER / LOGIN
+// REGISTER / LOGIN
 //------------------------------------------------------------
 async function loadLinks() {
     const list = await fetchCSV(LINK_CSV);
     document.getElementById("btn-register").href = list.find(x=>x.key==="register")?.value;
-    document.getElementById("btn-login").href = list.find(x=>x.key==="login")?.value;
+    document.getElementById("btn-login").href    = list.find(x=>x.key==="login")?.value;
 }
 
 
@@ -98,25 +85,23 @@ async function loadBanners() {
 
     list.forEach((b,i)=>{
         track.innerHTML += `
-        <div class="slide">
-            <img src="${b.banner_url}">
-            ${b.banner_text ? `<div class="slide-text">${b.banner_text}</div>` : ""}
-        </div>`;
-
+            <div class="slide">
+                <img src="${b.banner_url}">
+                ${b.banner_text ? `<div class="slide-text">${b.banner_text}</div>` : ""}
+            </div>
+        `;
         dots.innerHTML += `<span class="dot ${i===0?"active":""}" data-id="${i}"></span>`;
     });
 
     startSlider(list.length);
 }
 
-
-// Slider Logic
 let slideIndex = 0;
 let slideTimer;
 
 function startSlider(total) {
     const track = document.getElementById("slider-track");
-    const dots = document.querySelectorAll(".dot");
+    const dots  = document.querySelectorAll(".dot");
 
     function move(n) {
         slideIndex = (n + total) % total;
@@ -134,14 +119,14 @@ function startSlider(total) {
     });
 
     function auto() {
-        slideTimer = setInterval(()=>move(slideIndex+1), 4000);
+        slideTimer = setInterval(()=>move(slideIndex+1),4000);
     }
     auto();
 }
 
 
 //------------------------------------------------------------
-// LOGO STRIP (Full Width)
+// LOGO STRIP (PG Soft + Pragmatic Only)
 //------------------------------------------------------------
 async function loadLogoStrip() {
     const list = await fetchCSV(LOGO_CSV);
@@ -149,27 +134,30 @@ async function loadLogoStrip() {
 
     wrap.innerHTML = "";
 
-    list.forEach(logo=>{
-        wrap.innerHTML += `<img src="${logo.logo_url}">`;
+    const logos = list.filter(l =>
+        l.provider?.toLowerCase().includes("pg") ||
+        l.provider?.toLowerCase().includes("pragmatic")
+    ).slice(0,2);
+
+    logos.forEach(logo => {
+        wrap.innerHTML += `<img src="${logo.logo_url}" alt="provider-logo">`;
     });
 }
 
 
 //------------------------------------------------------------
-// GAME GRID (Provider-Based)
+// GAME GRID PER PROVIDER
 //------------------------------------------------------------
-async function renderGames(providerSelect="PG") {
+async function renderGames(provider="PG") {
     const allGames = await fetchCSV(GAME_CSV);
-    const games = providerSelect === "ALL"
-        ? allGames
-        : allGames.filter(g => g.provider === providerSelect);
+    const games = allGames.filter(g => g.provider === provider);
 
     const grid = document.getElementById("game-grid");
     grid.innerHTML = "";
 
     const rtpList = generateRTPList(games);
 
-    games.forEach((g, i)=>{
+    games.forEach((g,i)=>{
         const rtp = rtpList[i];
         const color = getColorClass(rtp);
 
@@ -189,15 +177,13 @@ async function renderGames(providerSelect="PG") {
 
 
 //------------------------------------------------------------
-// Provider Buttons
+// PROVIDER BUTTON EVENTS
 //------------------------------------------------------------
 document.querySelectorAll(".provider").forEach(btn=>{
     btn.onclick = ()=>{
         document.querySelectorAll(".provider").forEach(b=>b.classList.remove("active"));
         btn.classList.add("active");
-
-        const provider = btn.dataset.provider;
-        renderGames(provider);
+        renderGames(btn.dataset.provider);
     };
 });
 
@@ -211,5 +197,3 @@ loadLogoStrip();
 
 document.getElementById("default-provider").classList.add("active");
 renderGames("PG");
-
-console.log("RTP Live Premium Loaded.");
