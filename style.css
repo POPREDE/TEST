@@ -1,201 +1,126 @@
-/* ===== BACKGROUND 1x1 REPEAT ANTI-CRASH ===== */
-body {
-    margin: 0;
-    padding: 0;
-    font-family: -apple-system, Segoe UI, Arial;
+const SHEET_PRODUCTS =
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vTTCtV7qFSDZDCVIDI2vkXzGxI5GbG8Ez8suIyx_TrDEXSS6t23s6QrFn9ttW079TZk6yenfuc5LVt1/pub?gid=0&single=true&output=csv";
 
-    background:
-        rgba(0,0,0,0.65),
-        url("https://ik.imagekit.io/vs2btsn6j/LOGO?updatedAt=1764115415618");
+const SHEET_HIGHLIGHT =
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vTTCtV7qFSDZDCVIDI2vkXzGxI5GbG8Ez8suIyx_TrDEXSS6t23s6QrFn9ttW079TZk6yenfuc5LVt1/pub?gid=2032194924&single=true&output=csv";
 
-    background-repeat: repeat;
-    background-size: 35vmin 35vmin;
-    background-position: top center;
+let allProducts = [];
+let categories = [];
 
-    image-rendering: optimizeQuality;
-    padding-top: env(safe-area-inset-top);
-}
+/* LOAD HIGHLIGHT */
+Papa.parse(SHEET_HIGHLIGHT, {
+    download: true,
+    header: true,
+    complete: res => {
+        const box = document.getElementById("highlightSlider");
 
-/* ===== HEADER ===== */
-.hero {
-    position: fixed;
-    top: 0;
-    width: 100%;
-    padding: 12px 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-    background: rgba(0,0,0,0.55);
-    z-index: 4000;
-}
+        res.data.forEach(item => {
+            if (!item.img_url) return;
 
-.logo {
-    width: 50px;
-    height: 50px;
-    border-radius: 14px;
-    object-fit: cover;
-}
+            box.innerHTML += `
+                <div class="highlight-item">
+                    <img src="${item.img_url}">
+                    <div class="highlight-info">
+                        <div class="h-title">${item.name}</div>
+                        <div class="h-price">${item.price || ""}</div>
+                    </div>
+                </div>`;
+        });
+    }
+});
 
-.hero h1 {
-    margin: 0;
-    color: white;
-    font-size: 22px;
-}
+/* LOAD PRODUCTS */
+Papa.parse(SHEET_PRODUCTS, {
+    download: true,
+    header: true,
+    complete: res => {
+        allProducts = res.data.filter(p => p.name);
 
-/* ===== HIGHLIGHT BUTTON ===== */
-.highlight-toggle {
-    position: fixed;
-    top: 120px;
-    left: 20px;
-    width: 52px;
-    height: 52px;
-    background: rgba(0,0,0,0.55);
-    border-radius: 14px;
-    color: white;
-    font-size: 26px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 3500;
-}
+        /* generate unique categories */
+        categories = [...new Set(allProducts.map(p => p.category))].filter(Boolean);
 
-/* ===== HIGHLIGHT MENU ===== */
-.highlight-menu {
-    position: fixed;
-    top: 120px;
-    left: -240px;
-    width: 220px;
-    height: 360px;
-    padding: 12px;
-    border-radius: 14px;
-    background: rgba(0,0,0,0.55);
-    overflow-y: scroll;
-    -webkit-overflow-scrolling: touch;
-    z-index: 3499;
-    transition: .35s ease;
-}
-.highlight-menu.open {
-    left: 90px;
-}
-.highlight-item {
-    display: flex;
-    gap: 10px;
-    padding: 10px;
-    background: rgba(255,255,255,0.15);
-    border-radius: 12px;
-}
-.highlight-item img {
-    width: 55px;
-    height: 55px;
-    border-radius: 10px;
-    object-fit: cover;
-}
-.highlight-info { color: white; }
-.h-title { font-weight: bold; }
-.h-price { color: gold; font-weight: bold; }
+        renderProducts(allProducts);
+        renderCategories();
+    }
+});
 
-/* ===== SEARCH BAR ===== */
-.floating-search {
-    position: fixed;
-    bottom: 80px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: min(90%,500px);
-    padding: 14px 20px;
-    background: rgba(0,0,0,0.55);
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    z-index: 5000;
-}
-.floating-search input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: white;
-}
-.close-search {
-    background: rgba(255,255,255,0.3);
-    border: none;
-    padding: 6px 9px;
-    border-radius: 50%;
-    color: white;
+/* HOME PRODUCTS */
+function renderProducts(list) {
+    const grid = document.getElementById("productGrid");
+    grid.innerHTML = "";
+
+    list.forEach(p => {
+        grid.innerHTML += `
+            <div class="item">
+                <img src="${p.img_url}" onclick="openImageViewer('${p.img_url}')">
+                <div class="name">${p.name}</div>
+                <div class="price">${p.price}</div>
+            </div>`;
+    });
 }
 
-/* ===== BOTTOM NAVIGATION ===== */
-.bottom-nav {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    gap: 20px;
-    background: rgba(0,0,0,0.55);
-    padding: 10px 20px;
-    border-radius: 18px;
-    z-index: 4000;
-}
-.nav-btn {
-    color: white;
-    background: transparent;
-    border: 1px solid rgba(255,255,255,0.35);
-    padding: 8px 14px;
-    border-radius: 12px;
+/* CATEGORY LIST */
+function renderCategories() {
+    const list = document.getElementById("categoryList");
+    list.innerHTML = "";
+
+    categories.forEach(c => {
+        list.innerHTML += `
+            <div class="category-item" onclick="openCategory('${c}')">${c}</div>`;
+    });
 }
 
-/* ===== PAGE SYSTEM ===== */
-.page { display: none; padding-bottom: 150px; }
-.page.active { display: block; }
+/* CATEGORY DETAIL */
+function openCategory(cat) {
+    document.getElementById("categoryPage").classList.remove("active");
+    document.getElementById("categoryItemPage").classList.add("active");
+    document.getElementById("categoryTitle").innerText = cat;
 
-/* ===== CATEGORY LIST ===== */
-.page-title { color: white; text-align:center; margin-top:100px; }
-.category-list {
-    margin: 20px;
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
-}
-.category-item {
-    background: rgba(255,255,255,0.15);
-    padding: 15px;
-    text-align: center;
-    color: white;
-    border-radius: 14px;
-}
+    const grid = document.getElementById("categoryGrid");
+    grid.innerHTML = "";
 
-/* ===== GRID ===== */
-.grid-container { padding:16px; margin-top:100px; }
-.grid {
-    display:grid;
-    grid-template-columns:repeat(auto-fill, minmax(145px,1fr));
-    gap:18px;
-}
-.item {
-    background: rgba(0,0,0,0.55);
-    padding:14px;
-    border-radius:16px;
-    text-align:center;
-}
-.item img {
-    width:100%;
-    aspect-ratio:1/1;
-    object-fit:cover;
-    border-radius:12px;
+    allProducts
+        .filter(p => p.category === cat)
+        .forEach(p => {
+            grid.innerHTML += `
+                <div class="item">
+                    <img src="${p.img_url}" onclick="openImageViewer('${p.img_url}')">
+                    <div class="name">${p.name}</div>
+                    <div class="price">${p.price}</div>
+                </div>`;
+        });
 }
 
-/* ===== IMAGE VIEWER ===== */
-.image-viewer {
-    position: fixed;
-    inset: 0;
-    background: rgba(0,0,0,0.9);
-    display: none;
-    justify-content: center;
-    align-items: center;
-    z-index: 9999;
+/* PAGE NAVIGATION */
+function openHome() {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.getElementById("homePage").classList.add("active");
 }
-.image-viewer img {
-    width: 90%;
-    max-width: 600px;
-    border-radius: 16px;
+function openCategoryPage() {
+    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
+    document.getElementById("categoryPage").classList.add("active");
+}
+
+/* SEARCH */
+function applyFilters() {
+    let q = document.getElementById("searchInput").value.toLowerCase();
+    renderProducts(allProducts.filter(p => p.name.toLowerCase().includes(q)));
+}
+function closeSearch() {
+    document.getElementById("searchInput").value = "";
+    renderProducts(allProducts);
+}
+
+/* ⭐ HIGHLIGHT */
+function toggleHighlightMenu() {
+    document.getElementById("highlightMenu").classList.toggle("open");
+}
+
+/* 🔍 IMAGE VIEWER */
+function openImageViewer(src) {
+    document.getElementById("viewerImg").src = src;
+    document.getElementById("imageViewer").style.display = "flex";
+}
+function closeImageViewer() {
+    document.getElementById("imageViewer").style.display = "none";
 }
