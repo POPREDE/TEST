@@ -1,156 +1,135 @@
-const SHEET_PRODUCTS =
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vTTCtV7qFSDZDCVIDI2vkXzGxI5GbG8Ez8suIyx_TrDEXSS6t23s6QrFn9ttW079TZk6yenfuc5LVt1/pub?gid=0&single=true&output=csv";
+// =======================
+// CONFIG
+// =======================
 
-const SHEET_HIGHLIGHT =
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vTTCtV7qFSDZDCVIDI2vkXzGxI5GbG8Ez8suIyx_TrDEXSS6t23s6QrFn9ttW079TZk6yenfuc5LVt1/pub?gid=2032194924&single=true&output=csv";
+// GANTI dengan Google Sheets kamu
+const SHEET_URL = "https://opensheet.elk.sh/1AbCDeFgHiJKLM12345/GameList";
 
-let allProducts = [];
-let categories = [];
+const MIN_DAILY = 50;
+const MAX_DAILY = 98;
+const MIN_CHANGE = 0.1;
+const MAX_CHANGE = 1;
 
-/* ⭐ Highlight Load */
-Papa.parse(SHEET_HIGHLIGHT, {
-    download: true,
-    header: true,
-    complete: res => {
-        const box = document.getElementById("highlightSlider");
+const INTERVAL = 5 * 60 * 1000; // 5 menit
+const STORAGE_KEY = "rtpAutoPremium";
 
-        res.data.forEach(item => {
-            if (!item.img_url) return;
 
-            box.innerHTML += `
-                <div class="highlight-item" onclick="openImageViewer('${item.img_url}')">
-                    <img src="${item.img_url}">
-                    <div>
-                        <div class="h-title">${item.name}</div>
-                        <div class="h-price">${item.price || ""}</div>
-                    </div>
-                </div>`;
-        });
+// =======================
+// RTP SYSTEM
+// =======================
+
+function loadRTP() {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+    const today = new Date().getDate();
+
+    if (!saved) {
+        const base = randomDaily();
+        saveRTP(base, base, today);
+        return { base, rtp: base, today };
     }
+
+    if (saved.today !== today) {
+        const base = randomDaily();
+        saveRTP(base, base, today);
+        return { base, rtp: base, today };
+    }
+
+    return saved;
+}
+
+function saveRTP(base, rtp, today) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ base, rtp, today }));
+}
+
+function randomDaily() {
+    return Number((Math.random()*(MAX_DAILY-MIN_DAILY)+MIN_DAILY).toFixed(2));
+}
+
+function randomMinuteChange() {
+    return Number((Math.random()*(MAX_CHANGE-MIN_CHANGE)+MIN_CHANGE).toFixed(2));
+}
+
+function updateRTP() {
+    let data = loadRTP();
+    let rtp = data.rtp;
+
+    const change = randomMinuteChange();
+    const dir = Math.random() < 0.5 ? -1 : 1;
+
+    rtp = Number((rtp + dir*change).toFixed(2));
+
+    if (rtp > 99.9) rtp = 99.9;
+    if (rtp < 30) rtp = 30;
+
+    saveRTP(data.base, rtp, data.today);
+}
+
+
+// =======================
+// FETCH GOOGLE SHEETS
+// =======================
+
+async function getGames() {
+    const res = await fetch(SHEET_URL);
+    return await res.json();
+}
+
+
+// =======================
+// RENDER CARD
+// =======================
+
+async function renderRTP(providerFilter="ALL") {
+    const games = await getGames();
+    const wrap = document.querySelector("#rtp-container");
+    wrap.innerHTML = "";
+
+    const data = loadRTP();
+    const rtp = data.rtp;
+
+    games
+        .filter(g => providerFilter === "ALL" || g.provider === providerFilter)
+        .forEach(g => {
+
+            const card = document.createElement("div");
+            card.classList.add("card");
+
+            card.innerHTML = `
+                <img src="${g.image_url}" alt="">
+                <div class="card-content">
+                    <h2>${g.game_name}</h2>
+                    <div class="provider-tag">${g.provider || "Unknown Provider"}</div>
+                </div>
+                <div class="rtp-badge">${rtp}%</div>
+            `;
+
+            wrap.appendChild(card);
+        });
+}
+
+
+// =======================
+// PROVIDER FILTER BUTTON
+// =======================
+
+document.querySelectorAll(".provider").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelectorAll(".provider").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+
+        const provider = btn.getAttribute("data-provider");
+        renderRTP(provider);
+    });
 });
 
-/* Load Products */
-Papa.parse(SHEET_PRODUCTS, {
-    download: true,
-    header: true,
-    complete: res => {
-        allProducts = res.data.filter(p => p.name);
-        categories = [...new Set(allProducts.map(p => p.category))].filter(Boolean);
 
-        renderProducts(allProducts);
-        renderCategories();
-    }
-});
+// =======================
+// RUN
+// =======================
 
-/* ===== HOME GRID ===== */
-function renderProducts(list) {
-    const grid = document.getElementById("productGrid");
-    grid.innerHTML = "";
+renderRTP();
 
-    list.forEach(p => {
-        grid.innerHTML += `
-            <div class="item">
-                <img src="${p.img_url}" onclick="openImageViewer('${p.img_url}')">
-                <div class="name">${p.name}</div>
-                <div class="price">${p.price}</div>
-            </div>`;
-    });
-}
-
-/* ===== CATEGORY LIST ===== */
-function renderCategories() {
-    const list = document.getElementById("categoryList");
-    list.innerHTML = "";
-
-    categories.forEach(c => {
-        list.innerHTML += `
-            <div class="category-item" onclick="openCategory('${c}')">${c}</div>`;
-    });
-}
-
-/* ===== CATEGORY ITEM PAGE ===== */
-function openCategory(cat) {
-    hideHeader();
-    showPage("categoryItemPage");
-
-    document.getElementById("categoryTitle").innerText = cat;
-
-    const grid = document.getElementById("categoryGrid");
-    grid.innerHTML = "";
-
-    allProducts
-        .filter(p => p.category === cat)
-        .forEach(p => {
-            grid.innerHTML += `
-                <div class="item">
-                    <img src="${p.img_url}" onclick="openImageViewer('${p.img_url}')">
-                    <div class="name">${p.name}</div>
-                    <div class="price">${p.price}</div>
-                </div>`;
-        });
-}
-
-/* ===== PAGE SWITCH ===== */
-function showPage(id) {
-    document.querySelectorAll(".page").forEach(p => p.classList.remove("active"));
-    document.getElementById(id).classList.add("active");
-}
-
-function openHome() {
-    showHeader();
-    showPage("homePage");
-}
-
-function openCategoryPage() {
-    hideHeader();
-    showPage("categoryPage");
-}
-
-function openSearchPage() {
-    hideHeader();
-    showPage("searchPage");
-
-    document.getElementById("searchInput").value = "";
-    document.getElementById("searchGrid").innerHTML = "";
-}
-
-/* ===== HEADER CONTROL ===== */
-function hideHeader() {
-    document.getElementById("header").style.display = "none";
-}
-function showHeader() {
-    document.getElementById("header").style.display = "flex";
-}
-
-/* ===== SEARCH PAGE ===== */
-function applySearchPage() {
-    const q = document.getElementById("searchInput").value.toLowerCase();
-    const grid = document.getElementById("searchGrid");
-
-    grid.innerHTML = "";
-
-    allProducts
-        .filter(p => p.name.toLowerCase().includes(q))
-        .forEach(p => {
-            grid.innerHTML += `
-                <div class="item">
-                    <img src="${p.img_url}" onclick="openImageViewer('${p.img_url}')">
-                    <div class="name">${p.name}</div>
-                    <div class="price">${p.price}</div>
-                </div>`;
-        });
-}
-
-/* ⭐ Highlight Toggle */
-function toggleHighlightMenu() {
-    document.getElementById("highlightMenu").classList.toggle("open");
-}
-
-/* ===== IMAGE VIEWER ===== */
-function openImageViewer(src) {
-    document.getElementById("viewerImg").src = src;
-    document.getElementById("imageViewer").style.display = "flex";
-}
-function closeImageViewer() {
-    document.getElementById("imageViewer").style.display = "none";
-}
+setInterval(() => {
+    updateRTP();
+    renderRTP(document.querySelector(".provider.active").dataset.provider);
+}, INTERVAL);
