@@ -4,7 +4,7 @@
 const GAME_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv";
 const LINK_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=1888859615&single=true&output=csv";
 const BANNER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=773368200&single=true&output=csv";
-const LOGO_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=1030942322&single=true&output=csv";
+const LOGO_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?single=true&output=csv";
 
 const RTP_JSON = "https://raw.githubusercontent.com/POPREDE/TEST/main/rtp.json";
 
@@ -16,18 +16,17 @@ async function fetchCSV(url) {
     const res = await fetch(url);
     const text = await res.text();
     const rows = text.split("\n").map(r => r.split(","));
-    const headers = rows.shift().map(h => h.trim());
-
-    return rows.map(row => {
-        let obj = {};
-        row.forEach((val, i) => obj[headers[i]] = val.trim());
-        return obj;
+    const head = rows.shift().map(h => h.trim());
+    return rows.map(r=>{
+        let o={};
+        r.forEach((v,i)=>o[head[i]]=v.trim());
+        return o;
     });
 }
 
 
 //------------------------------------------------------------
-// LINKS + LOGO POPREDE
+// LINKS + LOGO
 //------------------------------------------------------------
 async function loadLinks() {
     const list = await fetchCSV(LINK_CSV);
@@ -40,62 +39,68 @@ async function loadLinks() {
     document.getElementById("btn-login").href =
         list.find(x => clean(x.key) === "login")?.value || "#";
 
-    // LOAD HEADER LOGO
     document.getElementById("logo-poprede").src =
         list.find(x => clean(x.key) === "logo")?.value || "";
 }
 
 
 //------------------------------------------------------------
-// BANNER SLIDER
+// BANNER LEVEL 4
 //------------------------------------------------------------
+let bannerList = [];
+let bannerIndex = 0;
+let bannerTimer;
+let touchStartX = 0;
+
 async function loadBanners() {
-    const list = await fetchCSV(BANNER_CSV);
+    bannerList = await fetchCSV(BANNER_CSV);
 
     const track = document.getElementById("banner-track");
+    const dots  = document.getElementById("banner-dots");
     const caption = document.getElementById("banner-caption");
-    const dots = document.getElementById("banner-dots");
 
     track.innerHTML = "";
     dots.innerHTML = "";
-    caption.innerHTML = "";
 
-    list.forEach((b, i) => {
+    bannerList.forEach((b, i) => {
         track.innerHTML += `
-            <div class="banner-slide">
+            <div class="banner-item">
                 <img src="${b.banner_url}">
             </div>
         `;
-
         dots.innerHTML += `<span class="dot ${i===0?'active':''}" data-id="${i}"></span>`;
     });
 
-    caption.textContent = list.length > 0 ? list[0].banner_text : "";
+    caption.textContent = bannerList[0]?.banner_text || "";
 
-    startBannerSlider(list);
+    startBannerEngine();
 }
 
-let bIndex = 0;
-let bannerTimer;
+function getPerView() {
+    if (innerWidth >= 1024) return 3;
+    if (innerWidth >= 600) return 2;
+    return 1;
+}
 
-function startBannerSlider(list) {
+function startBannerEngine() {
 
-    const total = list.length;
     const track = document.getElementById("banner-track");
     const dots = document.querySelectorAll(".banner-dots .dot");
     const caption = document.getElementById("banner-caption");
 
     function move(n) {
-        bIndex = (n + total) % total;
-        track.style.transform = `translateX(-${bIndex * 100}%)`;
+        bannerIndex = (n + bannerList.length) % bannerList.length;
+        const pv = getPerView();
+
+        track.style.transform = `translateX(-${bannerIndex * (100 / pv)}%)`;
 
         dots.forEach(d => d.classList.remove("active"));
-        dots[bIndex].classList.add("active");
+        dots[bannerIndex].classList.add("active");
 
-        caption.textContent = list[bIndex].banner_text;
+        caption.textContent = bannerList[bannerIndex]?.banner_text || "";
     }
 
-    dots.forEach(dot => {
+    dots.forEach(dot=>{
         dot.onclick = () => {
             clearInterval(bannerTimer);
             move(Number(dot.dataset.id));
@@ -104,15 +109,35 @@ function startBannerSlider(list) {
     });
 
     function auto() {
-        bannerTimer = setInterval(() => move(bIndex + 1), 4000);
+        bannerTimer = setInterval(() => move(bannerIndex + 1), 4000);
     }
 
     auto();
+
+    // SWIPE SUPPORT
+    track.addEventListener("touchstart", e => {
+        touchStartX = e.touches[0].clientX;
+    });
+
+    track.addEventListener("touchend", e => {
+        let dx = e.changedTouches[0].clientX - touchStartX;
+
+        if (dx > 50) {
+            clearInterval(bannerTimer);
+            move(bannerIndex - 1);
+            auto();
+        }
+        if (dx < -50) {
+            clearInterval(bannerTimer);
+            move(bannerIndex + 1);
+            auto();
+        }
+    });
 }
 
 
 //------------------------------------------------------------
-// LOGO STRIP (PG / PRAGMATIC ONLY)
+// LOGO STRIP
 //------------------------------------------------------------
 async function loadLogoStrip() {
     const list = await fetchCSV(LOGO_CSV);
@@ -121,18 +146,18 @@ async function loadLogoStrip() {
     wrap.innerHTML = "";
 
     const logos = list.filter(l =>
-        l.provider?.toLowerCase().includes("pg") ||
-        l.provider?.toLowerCase().includes("pragmatic")
-    ).slice(0, 2);
+        l.provider.toLowerCase().includes("pg") ||
+        l.provider.toLowerCase().includes("pragmatic")
+    ).slice(0,2);
 
-    logos.forEach(logo => {
+    logos.forEach(logo=>{
         wrap.innerHTML += `<img src="${logo.logo_url}">`;
     });
 }
 
 
 //------------------------------------------------------------
-// RTP + GAME GRID
+// RTP GRID
 //------------------------------------------------------------
 function getColorClass(rtp) {
     if (rtp >= 90) return "rtp-green";
@@ -141,7 +166,7 @@ function getColorClass(rtp) {
 }
 
 async function loadRTP(provider) {
-    const res = await fetch(RTP_JSON + "?cache=" + Date.now());
+    const res = await fetch(RTP_JSON+"?cache="+Date.now());
     const json = await res.json();
     return json.provider[provider];
 }
@@ -149,16 +174,16 @@ async function loadRTP(provider) {
 async function renderGames(provider="PG") {
 
     const allGames = await fetchCSV(GAME_CSV);
-    const games = allGames.filter(g => g.provider === provider);
+    const games = allGames.filter(x => x.provider === provider);
 
-    const rtpList = await loadRTP(provider);
+    const rtp = await loadRTP(provider);
 
     const grid = document.getElementById("game-grid");
     grid.innerHTML = "";
 
     games.forEach((g,i)=>{
-        const rtp = rtpList[i] || 50;
-        const color = getColorClass(rtp);
+        const r = rtp[i] || 50;
+        const color = getColorClass(r);
 
         grid.innerHTML += `
         <div class="card">
@@ -166,21 +191,19 @@ async function renderGames(provider="PG") {
             <div class="game-name">${g.game_name}</div>
 
             <div class="rtp-bar-container">
-                <div class="rtp-bar ${color}" style="width:${rtp}%"></div>
+                <div class="rtp-bar ${color}" style="width:${r}%"></div>
             </div>
-
-            <div class="rtp-text">${rtp}%</div>
+            <div class="rtp-text">${r}%</div>
         </div>`;
     });
-
 }
 
 
 //------------------------------------------------------------
-// PROVIDER SWITCHER
+// PROVIDER SWITCH
 //------------------------------------------------------------
 document.querySelectorAll(".provider").forEach(btn=>{
-    btn.onclick = () => {
+    btn.onclick = ()=>{
         document.querySelectorAll(".provider").forEach(b=>b.classList.remove("active"));
         btn.classList.add("active");
         renderGames(btn.dataset.provider);
@@ -189,12 +212,9 @@ document.querySelectorAll(".provider").forEach(btn=>{
 
 
 //------------------------------------------------------------
-// INITIAL LOAD
+// INIT
 //------------------------------------------------------------
 loadLinks();
 loadBanners();
 loadLogoStrip();
-
-document.getElementById("default-provider").classList.add("active");
 renderGames("PG");
-
