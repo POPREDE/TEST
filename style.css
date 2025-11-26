@@ -37,33 +37,61 @@ body {
 
 
 /* ===============================
-   BANNER SLIDER
+   BANNER SLIDER — 640 × 320
    =============================== */
-.slider-box {
+
+.banner-section {
     width: 100%;
-    overflow: hidden;
+    max-width: 640px;
+    margin: 15px auto;
     position: relative;
 }
-.slider-track {
-    display: flex;
-    transition: transform 0.4s ease;
-}
-.slide img {
+
+.banner-slider {
+    overflow: hidden;
     width: 100%;
+    border-radius: 12px;
 }
-.slider-dots {
+
+.banner-track {
+    display: flex;
+    transition: transform .4s ease;
+}
+
+.banner-track img {
+    width: 100%;
+    aspect-ratio: 2 / 1; /* 640 × 320 ratio */
+    object-fit: cover;
+    border-radius: 12px;
+}
+
+/* CAPTIONS UNDER THE BANNER */
+.banner-captions {
+    text-align: center;
+    color: #ddd;
+    font-size: 14px;
+    font-weight: 500;
+    padding: 8px 0 4px;
+    min-height: 22px; /* prevents shifting */
+}
+
+/* DOTS */
+.banner-dots {
     text-align: center;
     padding: 5px 0;
 }
-.dot {
+
+.banner-dots .dot {
     display: inline-block;
-    height: 10px;
     width: 10px;
-    margin: 4px;
+    height: 10px;
     background: #555;
     border-radius: 50%;
+    margin: 4px;
+    transition: background .3s;
 }
-.dot.active {
+
+.banner-dots .dot.active {
     background: gold;
 }
 
@@ -244,4 +272,5 @@ body {
     font-weight: bold;
     height: 18px;
 }
+
 
