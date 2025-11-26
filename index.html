@@ -2,53 +2,54 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>POP REDE RTP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RTP Live Premium</title>
-    <link rel="stylesheet" href="style.css">
-</head>
 
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
+
+</head>
 <body>
 
-    <header class="header">
-        <h1>RTP LIVE PREMIUM</h1>
-        <p>Auto Update 5 Menit • Reset Harian 00:00</p>
+    <!-- NAVBAR -->
+    <header class="navbar">
+        <div class="logo">POP REDE RTP</div>
+
+        <div class="nav-buttons">
+            <a id="btn-register" class="nav-btn">REGISTER</a>
+            <a id="btn-login" class="nav-btn">LOGIN</a>
+        </div>
     </header>
 
-    <!-- Buttons -->
-    <div class="top-buttons">
-        <a id="btn-register" class="btn-gold" target="_blank">REGISTER</a>
-        <a id="btn-login" class="btn-gold" target="_blank">LOGIN</a>
-    </div>
 
-    <!-- Banner Slider -->
-    <div class="slider-container">
+    <!-- BANNER SLIDER -->
+    <section class="slider-box">
         <div id="slider-track" class="slider-track"></div>
         <div id="slider-dots" class="slider-dots"></div>
+    </section>
+
+
+    <!-- PROVIDER TITLE -->
+    <div class="provider-title">
+        POPBIS RTP PRAGMATIC PLAY & PG SOFT
     </div>
 
-    <!-- Special Strip -->
-    <div class="special-strip">
-        POPBIS RTP – PRAGMATIC PLAY & PG SOFT
+    <!-- LOGO STRIP (2 LOGO WIDTH FIXED) -->
+    <div id="logo-strip" class="logo-strip"></div>
+
+
+    <!-- PROVIDER SWITCHER -->
+    <div class="provider-switch">
+        <button class="provider active" data-provider="PG" id="default-provider">PG SOFT</button>
+        <button class="provider" data-provider="PRAGMATIC">PRAGMATIC PLAY</button>
     </div>
 
-    <!-- Logo Strip -->
-    <div id="logo-strip" class="logo-strip-grid"></div>
 
-    <!-- Provider Buttons -->
-    <div class="provider-bar">
-        <button class="provider active" data-provider="PG" id="default-provider">PG Soft</button>
-        <button class="provider" data-provider="PRAGMATIC">Pragmatic Play</button>
-    </div>
+    <!-- GAME GRID -->
+    <div id="game-grid"></div>
 
-    <!-- Game Grid -->
-    <main>
-        <div id="game-grid" class="game-grid"></div>
-    </main>
 
-    <footer class="footer">
-        © Rede POP • Premium Gold UI Level 3
-    </footer>
-
+    <!-- JS -->
     <script src="script.js"></script>
 </body>
 </html>
