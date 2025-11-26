@@ -69,22 +69,28 @@ async function loadLinks() {
 //------------------------------------------------------------
 async function loadBanners() {
     const list = await fetchCSV(BANNER_CSV);
-    const track = document.getElementById("slider-track");
-    const dots = document.getElementById("slider-dots");
+
+    const track = document.getElementById("banner-track");
+    const captions = document.getElementById("banner-captions");
+    const dots = document.getElementById("banner-dots");
 
     track.innerHTML = "";
     dots.innerHTML = "";
+    captions.innerHTML = "";
 
-    list.forEach((b,i)=>{
+    list.forEach((b, i) => {
         track.innerHTML += `
-            <div class="slide">
+            <div class="banner-item">
                 <img src="${b.banner_url}">
             </div>
         `;
         dots.innerHTML += `<span class="dot ${i===0?'active':''}" data-id="${i}"></span>`;
     });
 
-    startSlider(list.length);
+    // First caption
+    captions.textContent = list.length > 0 ? list[0].banner_text : "";
+
+    startBannerSlider(list);
 }
 
 
@@ -192,3 +198,4 @@ loadLogoStrip();
 
 document.getElementById("default-provider").classList.add("active");
 renderGames("PG");
+
