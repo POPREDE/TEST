@@ -8,9 +8,8 @@ const LOGO_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmh
 
 
 //------------------------------------------------------------
-// GLOBAL RTP JSON SOURCE
+// GLOBAL RTP JSON SOURCE (FINAL)
 //------------------------------------------------------------
-// 🔥 GANTI DENGAN REPO KAMU
 const RTP_JSON = "https://raw.githubusercontent.com/POPREDE/TEST/main/rtp.json";
 
 
@@ -20,10 +19,8 @@ const RTP_JSON = "https://raw.githubusercontent.com/POPREDE/TEST/main/rtp.json";
 async function fetchCSV(url) {
     const res = await fetch(url);
     const text = await res.text();
-
     const rows = text.split("\n").map(r => r.split(","));
     const headers = rows.shift().map(h => h.trim());
-
     return rows.map(row => {
         let obj = {};
         row.forEach((val, i) => obj[headers[i]] = val.trim());
@@ -33,19 +30,17 @@ async function fetchCSV(url) {
 
 
 //------------------------------------------------------------
-// LOAD GLOBAL RTP (everyone sees same data)
+// LOAD GLOBAL RTP (EVERYONE SEES SAME DATA)
 //------------------------------------------------------------
 async function loadRTP(provider) {
-    // Add timestamp to bypass browser cache
-    const res = await fetch(RTP_JSON + "?t=" + Date.now());
-    const data = await res.json();
-
-    return data.provider[provider];
+    const res = await fetch(RTP_JSON + "?cache=" + Date.now());
+    const json = await res.json();
+    return json.provider[provider];
 }
 
 
 //------------------------------------------------------------
-// COLOR LOGIC
+// RTP COLOR
 //------------------------------------------------------------
 function getColorClass(rtp) {
     if (rtp >= 90) return "rtp-green";
@@ -55,12 +50,11 @@ function getColorClass(rtp) {
 
 
 //------------------------------------------------------------
-// REGISTER / LOGIN LINKS
+// REGISTER / LOGIN SOURCES
 //------------------------------------------------------------
 async function loadLinks() {
     const list = await fetchCSV(LINK_CSV);
-
-    const clean = str => str?.trim().toLowerCase();
+    const clean = x => x?.trim().toLowerCase();
 
     document.getElementById("btn-register").href =
         list.find(x => clean(x.key) === "register")?.value?.trim() || "#";
@@ -88,7 +82,7 @@ async function loadBanners() {
                 ${b.banner_text ? `<div class="slide-text">${b.banner_text}</div>` : ""}
             </div>
         `;
-        dots.innerHTML += `<span class="dot ${i===0?"active":""}" data-id="${i}"></span>`;
+        dots.innerHTML += `<span class="dot ${i===0?'active':''}" data-id="${i}"></span>`;
     });
 
     startSlider(list.length);
@@ -102,31 +96,31 @@ function startSlider(total) {
     const track = document.getElementById("slider-track");
     const dots = document.querySelectorAll(".dot");
 
-    function move(n) {
+    const move = n => {
         slideIndex = (n + total) % total;
         track.style.transform = `translateX(-${slideIndex * 100}%)`;
-
         dots.forEach(d=>d.classList.remove("active"));
         dots[slideIndex].classList.add("active");
-    }
+    };
 
-    dots.forEach(d=>{
-        d.onclick = ()=>{
+    dots.forEach(dot=>{
+        dot.onclick = ()=>{
             clearInterval(slideTimer);
-            move(Number(d.dataset.id));
+            move(Number(dot.dataset.id));
             auto();
         };
     });
 
-    function auto() {
-        slideTimer = setInterval(()=>move(slideIndex + 1), 4000);
-    }
+    const auto = () =>{
+        slideTimer = setInterval(()=>move(slideIndex+1), 4000);
+    };
+
     auto();
 }
 
 
 //------------------------------------------------------------
-// LOGO PROVIDER STRIP (PG & Pragmatic only)
+// LOGO STRIP (PG + PRAGMATIC ONLY)
 //------------------------------------------------------------
 async function loadLogoStrip() {
     const list = await fetchCSV(LOGO_CSV);
@@ -146,9 +140,10 @@ async function loadLogoStrip() {
 
 
 //------------------------------------------------------------
-// GAME GRID (uses global RTP)
+// GAME GRID USING GLOBAL RTP
 //------------------------------------------------------------
 async function renderGames(provider="PG") {
+
     const allGames = await fetchCSV(GAME_CSV);
     const games = allGames.filter(g => g.provider === provider);
 
@@ -173,14 +168,15 @@ async function renderGames(provider="PG") {
             <div class="rtp-text">${rtp}%</div>
         </div>`;
     });
+
 }
 
 
 //------------------------------------------------------------
-// PROVIDER BUTTONS
+// PROVIDER BUTTON EVENT
 //------------------------------------------------------------
 document.querySelectorAll(".provider").forEach(btn=>{
-    btn.onclick = ()=>{
+    btn.onclick = () => {
         document.querySelectorAll(".provider").forEach(b=>b.classList.remove("active"));
         btn.classList.add("active");
         renderGames(btn.dataset.provider);
