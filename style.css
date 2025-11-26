@@ -126,28 +126,69 @@ body {
 
 
 /* ===============================
-   FIXED RESPONSIVE RTP GRID LEVEL 5
+   FIXED WIDTH RESPONSIVE GRID
    =============================== */
+
 #game-grid {
     display: grid;
+    grid-template-columns: repeat(auto-fill, 130px);   /* CARD WIDTH FIXED */
+    justify-content: center;                           /* GRID CENTER AUTOMATIC */
     gap: 16px;
-    padding: 10px;
+    padding: 15px;
 }
 
-@media (max-width: 480px) {
-    #game-grid { grid-template-columns: repeat(2, 1fr); }
+/* CARD FIXED SIZE */
+.card {
+    width: 130px;       /* FIXED WIDTH */
+    height: 240px;      /* FIXED HEIGHT */
+    background: #111;
+    border-radius: 14px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 0 10px #000;
 }
-@media (min-width: 481px) and (max-width: 768px) {
-    #game-grid { grid-template-columns: repeat(3, 1fr); }
+
+/* IMAGE FIXED */
+.card img {
+    width: 100%;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 10px;
 }
-@media (min-width: 769px) and (max-width: 1200px) {
-    #game-grid { grid-template-columns: repeat(4, 1fr); }
+
+/* NAME FIXED */
+.game-name {
+    margin-top: 6px;
+    height: 32px;
+    font-size: 12px;
+    text-align: center;
+    overflow: hidden;
 }
-@media (min-width: 1201px) and (max-width: 1600px) {
-    #game-grid { grid-template-columns: repeat(5, 1fr); }
+
+/* RTP BAR FIXED */
+.rtp-bar-container {
+    margin-top: 6px;
+    height: 7px;
+    background: #2d2d2d;
+    border-radius: 6px;
+    overflow: hidden;
 }
-@media (min-width: 1601px) {
-    #game-grid { grid-template-columns: repeat(6, 1fr); }
+
+.rtp-bar {
+    height: 100%;
+    transition: width 0.4s ease;
+}
+
+.rtp-green  { background: #22ff4c; }
+.rtp-yellow { background: #ffd93b; }
+.rtp-red    { background: #ff4444; }
+
+.rtp-text {
+    margin-top: 5px;
+    font-size: 12px;
+    text-align: center;
+    font-weight: bold;
 }
 
 /* CARD */
@@ -203,3 +244,4 @@ body {
     font-weight: bold;
     height: 18px;
 }
+
