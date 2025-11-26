@@ -123,6 +123,46 @@ function startSlider(total) {
     auto();
 }
 
+let bannerIndex = 0;
+let bannerTimer;
+
+function startBannerSlider(list) {
+
+    const track = document.getElementById("banner-track");
+    const dots = document.querySelectorAll(".banner-dots .dot");
+    const captions = document.getElementById("banner-captions");
+
+    const total = list.length;
+
+    function move(n) {
+        bannerIndex = (n + total) % total;
+
+        track.style.transform = `translateX(-${bannerIndex * 100}%)`;
+
+        // Update dots
+        dots.forEach(d => d.classList.remove("active"));
+        dots[bannerIndex].classList.add("active");
+
+        // Update caption under banner
+        captions.textContent = list[bannerIndex].banner_text;
+    }
+
+    dots.forEach(dot => {
+        dot.onclick = () => {
+            clearInterval(bannerTimer);
+            move(Number(dot.dataset.id));
+            auto();
+        };
+    });
+
+    function auto() {
+        bannerTimer = setInterval(() => move(bannerIndex + 1), 4000);
+    }
+
+    auto();
+}
+
+
 
 //------------------------------------------------------------
 // LOGO STRIP (2 LOGO WIDE)
@@ -198,4 +238,5 @@ loadLogoStrip();
 
 document.getElementById("default-provider").classList.add("active");
 renderGames("PG");
+
 
