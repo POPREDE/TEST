@@ -9,6 +9,12 @@ const LOGO_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmh
 
 
 //------------------------------------------------------------
+// GLOBAL RTP JSON SOURCE
+//------------------------------------------------------------
+const RTP_JSON = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/rtp.json";
+
+
+//------------------------------------------------------------
 // CSV PARSER
 //------------------------------------------------------------
 async function fetchCSV(url) {
@@ -27,28 +33,13 @@ async function fetchCSV(url) {
 
 
 //------------------------------------------------------------
-// RTP GENERATOR PER GAME
+// RTP LOADER (GLOBAL FROM GITHUB JSON)
 //------------------------------------------------------------
-function generateRTPList(games) {
-    const total = games.length;
+async function loadRTP(provider) {
+    const res = await fetch(RTP_JSON + "?t=" + Date.now());
+    const json = await res.json();
 
-    const high98 = Math.floor(Math.random() * 2) + 3; // 3–4 game
-    const highRange = 10; // 10 game 90–97%
-
-    let arr = [];
-
-    for (let i = 0; i < high98; i++) arr.push(98);
-    for (let i = 0; i < highRange; i++) arr.push(Math.floor(Math.random()*8)+90);
-
-    while (arr.length < total) arr.push(Math.floor(Math.random()*40)+50);
-
-    // shuffle
-    for (let i = arr.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random()*(i+1));
-        [arr[i], arr[j]] = [arr[j], arr[i]];
-    }
-
-    return arr;
+    return json.provider[provider];
 }
 
 
@@ -67,8 +58,14 @@ function getColorClass(rtp) {
 //------------------------------------------------------------
 async function loadLinks() {
     const list = await fetchCSV(LINK_CSV);
-    document.getElementById("btn-register").href = list.find(x=>x.key==="register")?.value;
-    document.getElementById("btn-login").href    = list.find(x=>x.key==="login")?.value;
+
+    const clean = str => str?.trim().toLowerCase();
+
+    const reg = list.find(x => clean(x.key) === "register")?.value?.trim();
+    const log = list.find(x => clean(x.key) === "login")?.value?.trim();
+
+    document.getElementById("btn-register").href = reg || "#";
+    document.getElementById("btn-login").href    = log || "#";
 }
 
 
@@ -96,6 +93,7 @@ async function loadBanners() {
     startSlider(list.length);
 }
 
+
 let slideIndex = 0;
 let slideTimer;
 
@@ -105,8 +103,9 @@ function startSlider(total) {
 
     function move(n) {
         slideIndex = (n + total) % total;
-        track.style.transform = `translateX(-${slideIndex*100}%)`;
-        dots.forEach(d=>d.classList.remove("active"));
+        track.style.transform = `translateX(-${slideIndex * 100}%)`;
+
+        dots.forEach(d => d.classList.remove("active"));
         dots[slideIndex].classList.add("active");
     }
 
@@ -126,7 +125,7 @@ function startSlider(total) {
 
 
 //------------------------------------------------------------
-// LOGO STRIP (PG Soft + Pragmatic Only)
+// LOGO STRIP (PG & Pragmatic Only)
 //------------------------------------------------------------
 async function loadLogoStrip() {
     const list = await fetchCSV(LOGO_CSV);
@@ -139,26 +138,26 @@ async function loadLogoStrip() {
         l.provider?.toLowerCase().includes("pragmatic")
     ).slice(0,2);
 
-    logos.forEach(logo => {
-        wrap.innerHTML += `<img src="${logo.logo_url}" alt="provider-logo">`;
+    logos.forEach(logo=>{
+        wrap.innerHTML += `<img src="${logo.logo_url}" alt="">`;
     });
 }
 
 
 //------------------------------------------------------------
-// GAME GRID PER PROVIDER
+// GAME GRID (Global RTP from GitHub JSON)
 //------------------------------------------------------------
 async function renderGames(provider="PG") {
     const allGames = await fetchCSV(GAME_CSV);
-    const games = allGames.filter(g => g.provider === provider);
+    const games = allGames.filter(g=>g.provider === provider);
+
+    const rtpList = await loadRTP(provider);
 
     const grid = document.getElementById("game-grid");
     grid.innerHTML = "";
 
-    const rtpList = generateRTPList(games);
-
     games.forEach((g,i)=>{
-        const rtp = rtpList[i];
+        const rtp = rtpList[i] || 50;
         const color = getColorClass(rtp);
 
         grid.innerHTML += `
@@ -183,6 +182,7 @@ document.querySelectorAll(".provider").forEach(btn=>{
     btn.onclick = ()=>{
         document.querySelectorAll(".provider").forEach(b=>b.classList.remove("active"));
         btn.classList.add("active");
+
         renderGames(btn.dataset.provider);
     };
 });
