@@ -6,10 +6,6 @@ const LINK_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmh
 const BANNER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=773368200&single=true&output=csv";
 const LOGO_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?single=true&output=csv";
 
-
-//------------------------------------------------------------
-// GLOBAL RTP JSON SOURCE (FINAL)
-//------------------------------------------------------------
 const RTP_JSON = "https://raw.githubusercontent.com/POPREDE/TEST/main/rtp.json";
 
 
@@ -21,6 +17,7 @@ async function fetchCSV(url) {
     const text = await res.text();
     const rows = text.split("\n").map(r => r.split(","));
     const headers = rows.shift().map(h => h.trim());
+
     return rows.map(row => {
         let obj = {};
         row.forEach((val, i) => obj[headers[i]] = val.trim());
@@ -30,37 +27,22 @@ async function fetchCSV(url) {
 
 
 //------------------------------------------------------------
-// LOAD GLOBAL RTP
-//------------------------------------------------------------
-async function loadRTP(provider) {
-    const res = await fetch(RTP_JSON + "?cache=" + Date.now());
-    const json = await res.json();
-    return json.provider[provider];
-}
-
-
-//------------------------------------------------------------
-// COLOR
-//------------------------------------------------------------
-function getColorClass(rtp) {
-    if (rtp >= 90) return "rtp-green";
-    if (rtp >= 70) return "rtp-yellow";
-    return "rtp-red";
-}
-
-
-//------------------------------------------------------------
-// LINKS
+// LINKS + LOGO POPREDE
 //------------------------------------------------------------
 async function loadLinks() {
     const list = await fetchCSV(LINK_CSV);
+
     const clean = x => x?.trim().toLowerCase();
 
     document.getElementById("btn-register").href =
-        list.find(x => clean(x.key) === "register")?.value?.trim() || "#";
+        list.find(x => clean(x.key) === "register")?.value || "#";
 
     document.getElementById("btn-login").href =
-        list.find(x => clean(x.key) === "login")?.value?.trim() || "#";
+        list.find(x => clean(x.key) === "login")?.value || "#";
+
+    // LOAD HEADER LOGO
+    document.getElementById("logo-poprede").src =
+        list.find(x => clean(x.key) === "logo")?.value || "";
 }
 
 
@@ -71,80 +53,46 @@ async function loadBanners() {
     const list = await fetchCSV(BANNER_CSV);
 
     const track = document.getElementById("banner-track");
-    const captions = document.getElementById("banner-captions");
+    const caption = document.getElementById("banner-caption");
     const dots = document.getElementById("banner-dots");
 
     track.innerHTML = "";
     dots.innerHTML = "";
-    captions.innerHTML = "";
+    caption.innerHTML = "";
 
     list.forEach((b, i) => {
         track.innerHTML += `
-            <div class="banner-item">
+            <div class="banner-slide">
                 <img src="${b.banner_url}">
             </div>
         `;
+
         dots.innerHTML += `<span class="dot ${i===0?'active':''}" data-id="${i}"></span>`;
     });
 
-    // First caption
-    captions.textContent = list.length > 0 ? list[0].banner_text : "";
+    caption.textContent = list.length > 0 ? list[0].banner_text : "";
 
     startBannerSlider(list);
 }
 
-
-let slideIndex = 0;
-let slideTimer;
-
-function startSlider(total) {
-    const track = document.getElementById("slider-track");
-    const dots = document.querySelectorAll(".dot");
-
-    const move = n => {
-        slideIndex = (n + total) % total;
-        track.style.transform = `translateX(-${slideIndex * 100}%)`;
-        dots.forEach(d=>d.classList.remove("active"));
-        dots[slideIndex].classList.add("active");
-    };
-
-    dots.forEach(dot=>{
-        dot.onclick = ()=>{
-            clearInterval(slideTimer);
-            move(Number(dot.dataset.id));
-            auto();
-        };
-    });
-
-    const auto = () =>{
-        slideTimer = setInterval(()=>move(slideIndex+1), 4000);
-    };
-
-    auto();
-}
-
-let bannerIndex = 0;
+let bIndex = 0;
 let bannerTimer;
 
 function startBannerSlider(list) {
 
+    const total = list.length;
     const track = document.getElementById("banner-track");
     const dots = document.querySelectorAll(".banner-dots .dot");
-    const captions = document.getElementById("banner-captions");
-
-    const total = list.length;
+    const caption = document.getElementById("banner-caption");
 
     function move(n) {
-        bannerIndex = (n + total) % total;
+        bIndex = (n + total) % total;
+        track.style.transform = `translateX(-${bIndex * 100}%)`;
 
-        track.style.transform = `translateX(-${bannerIndex * 100}%)`;
-
-        // Update dots
         dots.forEach(d => d.classList.remove("active"));
-        dots[bannerIndex].classList.add("active");
+        dots[bIndex].classList.add("active");
 
-        // Update caption under banner
-        captions.textContent = list[bannerIndex].banner_text;
+        caption.textContent = list[bIndex].banner_text;
     }
 
     dots.forEach(dot => {
@@ -156,16 +104,15 @@ function startBannerSlider(list) {
     });
 
     function auto() {
-        bannerTimer = setInterval(() => move(bannerIndex + 1), 4000);
+        bannerTimer = setInterval(() => move(bIndex + 1), 4000);
     }
 
     auto();
 }
 
 
-
 //------------------------------------------------------------
-// LOGO STRIP (2 LOGO WIDE)
+// LOGO STRIP (PG / PRAGMATIC ONLY)
 //------------------------------------------------------------
 async function loadLogoStrip() {
     const list = await fetchCSV(LOGO_CSV);
@@ -176,17 +123,29 @@ async function loadLogoStrip() {
     const logos = list.filter(l =>
         l.provider?.toLowerCase().includes("pg") ||
         l.provider?.toLowerCase().includes("pragmatic")
-    ).slice(0,2);
+    ).slice(0, 2);
 
-    logos.forEach(logo=>{
+    logos.forEach(logo => {
         wrap.innerHTML += `<img src="${logo.logo_url}">`;
     });
 }
 
 
 //------------------------------------------------------------
-// GAME GRID (FINAL)
+// RTP + GAME GRID
 //------------------------------------------------------------
+function getColorClass(rtp) {
+    if (rtp >= 90) return "rtp-green";
+    if (rtp >= 70) return "rtp-yellow";
+    return "rtp-red";
+}
+
+async function loadRTP(provider) {
+    const res = await fetch(RTP_JSON + "?cache=" + Date.now());
+    const json = await res.json();
+    return json.provider[provider];
+}
+
 async function renderGames(provider="PG") {
 
     const allGames = await fetchCSV(GAME_CSV);
@@ -218,7 +177,7 @@ async function renderGames(provider="PG") {
 
 
 //------------------------------------------------------------
-// PROVIDER SWITCH
+// PROVIDER SWITCHER
 //------------------------------------------------------------
 document.querySelectorAll(".provider").forEach(btn=>{
     btn.onclick = () => {
@@ -238,5 +197,3 @@ loadLogoStrip();
 
 document.getElementById("default-provider").classList.add("active");
 renderGames("PG");
-
-
