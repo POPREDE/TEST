@@ -4,14 +4,14 @@
 const GAME_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv";
 const LINK_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=1888859615&single=true&output=csv";
 const BANNER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=773368200&single=true&output=csv";
-
 const LOGO_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?single=true&output=csv";
 
 
 //------------------------------------------------------------
 // GLOBAL RTP JSON SOURCE
 //------------------------------------------------------------
-const RTP_JSON = "https://raw.githubusercontent.com/YOUR_USERNAME/YOUR_REPO/main/rtp.json";
+// 🔥 GANTI DENGAN REPO KAMU
+const RTP_JSON = "https://raw.githubusercontent.com/POPREDE/TEST/main/rtp.json";
 
 
 //------------------------------------------------------------
@@ -33,13 +33,14 @@ async function fetchCSV(url) {
 
 
 //------------------------------------------------------------
-// RTP LOADER (GLOBAL FROM GITHUB JSON)
+// LOAD GLOBAL RTP (everyone sees same data)
 //------------------------------------------------------------
 async function loadRTP(provider) {
+    // Add timestamp to bypass browser cache
     const res = await fetch(RTP_JSON + "?t=" + Date.now());
-    const json = await res.json();
+    const data = await res.json();
 
-    return json.provider[provider];
+    return data.provider[provider];
 }
 
 
@@ -54,18 +55,18 @@ function getColorClass(rtp) {
 
 
 //------------------------------------------------------------
-// REGISTER / LOGIN
+// REGISTER / LOGIN LINKS
 //------------------------------------------------------------
 async function loadLinks() {
     const list = await fetchCSV(LINK_CSV);
 
     const clean = str => str?.trim().toLowerCase();
 
-    const reg = list.find(x => clean(x.key) === "register")?.value?.trim();
-    const log = list.find(x => clean(x.key) === "login")?.value?.trim();
+    document.getElementById("btn-register").href =
+        list.find(x => clean(x.key) === "register")?.value?.trim() || "#";
 
-    document.getElementById("btn-register").href = reg || "#";
-    document.getElementById("btn-login").href    = log || "#";
+    document.getElementById("btn-login").href =
+        list.find(x => clean(x.key) === "login")?.value?.trim() || "#";
 }
 
 
@@ -99,13 +100,13 @@ let slideTimer;
 
 function startSlider(total) {
     const track = document.getElementById("slider-track");
-    const dots  = document.querySelectorAll(".dot");
+    const dots = document.querySelectorAll(".dot");
 
     function move(n) {
         slideIndex = (n + total) % total;
         track.style.transform = `translateX(-${slideIndex * 100}%)`;
 
-        dots.forEach(d => d.classList.remove("active"));
+        dots.forEach(d=>d.classList.remove("active"));
         dots[slideIndex].classList.add("active");
     }
 
@@ -118,14 +119,14 @@ function startSlider(total) {
     });
 
     function auto() {
-        slideTimer = setInterval(()=>move(slideIndex+1),4000);
+        slideTimer = setInterval(()=>move(slideIndex + 1), 4000);
     }
     auto();
 }
 
 
 //------------------------------------------------------------
-// LOGO STRIP (PG & Pragmatic Only)
+// LOGO PROVIDER STRIP (PG & Pragmatic only)
 //------------------------------------------------------------
 async function loadLogoStrip() {
     const list = await fetchCSV(LOGO_CSV);
@@ -139,17 +140,17 @@ async function loadLogoStrip() {
     ).slice(0,2);
 
     logos.forEach(logo=>{
-        wrap.innerHTML += `<img src="${logo.logo_url}" alt="">`;
+        wrap.innerHTML += `<img src="${logo.logo_url}">`;
     });
 }
 
 
 //------------------------------------------------------------
-// GAME GRID (Global RTP from GitHub JSON)
+// GAME GRID (uses global RTP)
 //------------------------------------------------------------
 async function renderGames(provider="PG") {
     const allGames = await fetchCSV(GAME_CSV);
-    const games = allGames.filter(g=>g.provider === provider);
+    const games = allGames.filter(g => g.provider === provider);
 
     const rtpList = await loadRTP(provider);
 
@@ -166,7 +167,7 @@ async function renderGames(provider="PG") {
             <div class="game-name">${g.game_name}</div>
 
             <div class="rtp-bar-container">
-                <div class="rtp-bar ${color}" style="width:${rtp}%;"></div>
+                <div class="rtp-bar ${color}" style="width:${rtp}%"></div>
             </div>
 
             <div class="rtp-text">${rtp}%</div>
@@ -176,13 +177,12 @@ async function renderGames(provider="PG") {
 
 
 //------------------------------------------------------------
-// PROVIDER BUTTON EVENTS
+// PROVIDER BUTTONS
 //------------------------------------------------------------
 document.querySelectorAll(".provider").forEach(btn=>{
     btn.onclick = ()=>{
         document.querySelectorAll(".provider").forEach(b=>b.classList.remove("active"));
         btn.classList.add("active");
-
         renderGames(btn.dataset.provider);
     };
 });
