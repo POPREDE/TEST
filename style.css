@@ -1,3 +1,102 @@
+/* RESET */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: linear-gradient(to bottom, #1a1a1a, #0b0b0b);
+    font-family: "Poppins", sans-serif;
+    color: #fff;
+    padding: 18px;
+}
+
+/* HEADER */
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+}
+.header h1 {
+    color: #ffdd55;
+    font-size: 32px;
+    text-shadow: 0 0 10px rgba(255, 221, 85, 0.9);
+}
+.header p {
+    opacity: .7;
+}
+
+/* GOLD BUTTON */
+.top-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 14px;
+    margin-bottom: 22px;
+}
+.btn-gold {
+    background: linear-gradient(135deg, #ffdd55, #e6c132);
+    color: #000;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 700;
+    text-decoration: none;
+    box-shadow: 0 0 15px rgba(255,221,85,.6);
+    transition: .2s;
+}
+.btn-gold:hover {
+    background: #ffe77a;
+    transform: translateY(-2px);
+}
+
+/* SLIDER */
+.slider-container {
+    overflow: hidden;
+    border-radius: 14px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255,221,85,0.25);
+}
+.slider-track {
+    display: flex;
+    transition: .5s ease;
+}
+.slide img {
+    width: 100%;
+    height: 170px;
+    object-fit: cover;
+    border-radius: 14px;
+}
+.slide {
+    min-width: 100%;
+    position: relative;
+}
+.slide-text {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background: rgba(0,0,0,.5);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: #ffdd55;
+    font-weight: 700;
+}
+.slider-dots {
+    text-align: center;
+    margin-top: 10px;
+}
+.dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    margin: 4px;
+    background: rgba(255,255,255,.4);
+    border-radius: 50%;
+}
+.dot.active {
+    background: #ffdd55;
+    box-shadow: 0 0 8px #ffdd55;
+}
+
 /* SPECIAL STRIP */
 .special-strip {
     background: linear-gradient(135deg, #ffb84d, #ffdd55);
@@ -11,14 +110,13 @@
     font-size: 16px;
 }
 
-/* LOGO GRID 2 BOX */
+/* LOGO GRID */
 .logo-grid {
     display: grid;
     grid-template-columns: repeat(2,1fr);
     gap: 14px;
     margin-bottom: 20px;
 }
-
 .logo-grid img {
     width: 100%;
     height: 80px;
@@ -28,4 +126,79 @@
     border-radius: 10px;
     padding: 10px;
     box-shadow: 0 0 12px rgba(255,221,85,.25);
+}
+
+/* PROVIDER */
+.provider-bar {
+    display: flex;
+    gap: 10px;
+    overflow-x: auto;
+    margin-bottom: 20px;
+}
+.provider {
+    padding: 8px 15px;
+    background: #2a2a2a;
+    border-radius: 20px;
+    border: 1px solid rgba(255,221,85,.2);
+    cursor: pointer;
+}
+.provider.active,
+.provider:hover {
+    background: #ffdd55;
+    color: #000;
+}
+
+/* CARD */
+.rtp-list {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+.card {
+    display: flex;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,221,85,.25);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 0 12px rgba(255,221,85,.15);
+    transition: .2s;
+}
+.card:hover {
+    box-shadow: 0 0 20px rgba(255,221,85,.35);
+}
+.card img {
+    width: 140px;
+    object-fit: cover;
+}
+.card-content {
+    padding: 12px;
+    width: 100%;
+}
+.card-content h2 {
+    font-size: 17px;
+    font-weight: 600;
+}
+.provider-tag {
+    opacity: .7;
+    font-size: 13px;
+    margin-top: 4px;
+}
+.rtp-badge {
+    align-self: center;
+    margin-right: 16px;
+    background: #ffdd55;
+    color: #000;
+    padding: 6px 14px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 20px;
+    box-shadow: 0 0 12px #ffdd55;
+}
+
+/* FOOTER */
+.footer {
+    text-align: center;
+    margin-top: 25px;
+    opacity: .5;
+    font-size: 13px;
 }
