@@ -1,0 +1,61 @@
+name: Update RTP JSON
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Generate RTP JSON
+        run: |
+          node << 'EOF'
+          const fs = require('fs');
+
+          function shuffle(arr) {
+            for (let i = arr.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [arr[i], arr[j]] = [arr[j], arr[i]];
+            }
+            return arr;
+          }
+
+          function generateRTP(count) {
+            const arr = [];
+            const high98 = Math.floor(Math.random() * 2) + 3;
+            const highRange = 10;
+
+            for (let i = 0; i < high98; i++) arr.push(98);
+            for (let i = 0; i < highRange; i++) arr.push(Math.floor(Math.random() * 8) + 90);
+
+            while (arr.length < count) arr.push(Math.floor(Math.random() * 40) + 50);
+
+            return shuffle(arr);
+          }
+
+          const pg_games = 100;
+          const pragmatic_games = 100;
+
+          const rtpData = {
+            generated_at: new Date().toISOString(),
+            provider: {
+              PG: generateRTP(pg_games),
+              PRAGMATIC: generateRTP(pragmatic_games)
+            }
+          };
+
+          fs.writeFileSync("rtp.json", JSON.stringify(rtpData, null, 2));
+          EOF
+
+      - name: Commit Changes
+        run: |
+          git config --global user.name "github-actions"
+          git config --global user.email "actions@github.com"
+          git add rtp.json
+          git commit -m "Auto update RTP JSON" || echo "No changes"
+          git push
