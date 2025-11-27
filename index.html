@@ -2,9 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>POP REDE RTP – Banner Level 4</title>
+    <title>POP REDE RTP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -14,29 +13,42 @@
         <a id="btn-register" class="header-btn">REGISTER</a>
 
         <div class="header-logo">
-            <img id="logo-poprede" src="" alt="logo">
+            <img id="logo-poprede" src="" alt="POPREDE">
         </div>
 
         <a id="btn-login" class="header-btn">LOGIN</a>
     </header>
 
 
-    <!-- BANNER LEVEL 4 -->
-    <section class="banner-container">
-        <div id="banner-track" class="banner-track"></div>
+    <!-- HERO SECTION (LEFT TEXT + RIGHT BANNER) -->
+    <section class="hero-container">
+
+        <div class="hero-text">
+            <h2 id="hero-title">Selamat Datang di POPREDE</h2>
+            <p id="hero-desc">Nikmati update RTP terbaru setiap 5 menit, event harian, dan bonus eksklusif dari PG Soft & Pragmatic Play.</p>
+        </div>
+
+        <div class="hero-banner">
+            <div class="banner-slider">
+                <div id="banner-track" class="banner-track"></div>
+            </div>
+
+            <div id="banner-caption" class="banner-caption"></div>
+            <div id="banner-dots" class="banner-dots"></div>
+        </div>
+
     </section>
 
-    <div id="banner-caption" class="banner-caption"></div>
-    <div id="banner-dots" class="banner-dots"></div>
 
-
-    <!-- TITLE -->
+    <!-- PROVIDER TITLE -->
     <div class="provider-title">
         POPBIS RTP PRAGMATIC PLAY & PG SOFT
     </div>
 
+
     <!-- LOGO GRID -->
     <div id="logo-strip" class="logo-strip"></div>
+
 
     <!-- PROVIDER SWITCH -->
     <div class="provider-switch">
@@ -44,8 +56,10 @@
         <button class="provider" data-provider="PRAGMATIC">PRAGMATIC PLAY</button>
     </div>
 
+
     <!-- GAME GRID -->
     <div id="game-grid"></div>
+
 
     <script src="script.js"></script>
 </body>
