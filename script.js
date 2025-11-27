@@ -147,8 +147,8 @@ async function loadLogoStrip() {
 
     const logos = list
         .filter(l =>
-            l.provider.toLowerCase().includes("pg") ||
-            l.provider.toLowerCase().includes("pragmatic")
+            l.provider.toLowerCase().includes("PG") ||
+            l.provider.toLowerCase().includes("PRAGMATIC")
         )
         .slice(0, 2);
 
@@ -222,3 +222,4 @@ loadLinks();
 loadBanners();
 loadLogoStrip();
 renderGames("PG");
+
