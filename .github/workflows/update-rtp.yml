@@ -1,4 +1,4 @@
-name: Generate RTP JSON
+name: Advanced RTP Generator (Level 2)
 
 on:
   schedule:
@@ -10,11 +10,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout
-      uses: actions/checkout@v3
+    - uses: actions/checkout@v3
 
-    - name: Install Node
-      uses: actions/setup-node@v3
+    - uses: actions/setup-node@v3
       with:
         node-version: "18"
 
@@ -23,66 +21,133 @@ jobs:
         curl -L -o games.csv \
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv"
 
-    - name: Generate RTP JSON
+    - name: Generate Advanced RTP JSON
       run: |
         node << 'EOF'
         const fs = require("fs");
 
         // LOAD CSV
-        const raw = fs.readFileSync("games.csv", "utf8")
+        const raw = fs.readFileSync("games.csv","utf8")
           .trim()
           .split("\n")
-          .map(r => r.split(","));
+          .map(r=>r.split(","));
 
         const head = raw.shift();
-        const rows = raw.map(r => {
-          let o = {};
-          r.forEach((v,i)=>o[head[i]] = v.trim());
+        const rows = raw.map(r=>{
+          let o={};
+          r.forEach((v,i)=>o[head[i]]=v.trim());
           return o;
         });
 
-        // COUNT PER PROVIDER
-        const PG_count = rows.filter(g => g.provider === "PG").length;
-        const PRAG_count = rows.filter(g => g.provider === "PRAGMATIC").length;
+        const PG_count = rows.filter(x=>x.provider==="PG").length;
+        const PRAG_count = rows.filter(x=>x.provider==="PRAGMATIC").length;
 
-        // RNG FUNCTION
-        function rand(min,max){
+        // TREND ENGINE (dipilih setiap hari)
+        const today = new Date().toISOString().split("T")[0];
+        const trendFile = `rtp-history/${today}/trend.json`;
+
+        let trend="normal";
+        if(!fs.existsSync(trendFile)){
+          const all = ["up","down","normal"];
+          trend = all[Math.floor(Math.random()*all.length)];
+
+          fs.mkdirSync(`rtp-history/${today}`,{recursive:true});
+          fs.writeFileSync(trendFile, JSON.stringify({trend}));
+        } else {
+          const data = JSON.parse(fs.readFileSync(trendFile));
+          trend = data.trend;
+        }
+
+        function baseRandom(min,max){
           return +(Math.random()*(max-min)+min).toFixed(1);
         }
 
-        // BUILD RTP ARRAY FOR EACH PROVIDER
-        function build(count){
+        // DISTRIBUSI LEVEL 2 (lebih natural)
+        function makeRTP(count){
           let arr = [];
 
-          // Max rules
-          const high = Math.min(8,count);     // ≥ 90%
-          const low  = Math.min(20,count-high); // ≤ 70%
+          let high = Math.min(5,count);
+          let low  = Math.min(15,count-high);
 
-          for(let i=0;i<high;i++) arr.push(rand(90,99.9));
-          for(let i=0;i<low;i++) arr.push(rand(50,70));
-          while(arr.length < count) arr.push(rand(70,90));
+          // Make high group
+          for(let i=0;i<high;i++){
+            if(trend==="up") arr.push(baseRandom(93,99.9));
+            else arr.push(baseRandom(90,96));
+          }
+
+          // Make low group
+          for(let i=0;i<low;i++){
+            if(trend==="down") arr.push(baseRandom(50,66));
+            else arr.push(baseRandom(55,70));
+          }
+
+          // Middle group
+          while(arr.length<count){
+            if(trend==="up") arr.push(baseRandom(78,93));
+            else if(trend==="down") arr.push(baseRandom(65,82));
+            else arr.push(baseRandom(70,90));
+          }
 
           // Shuffle
-          return arr.sort(()=>Math.random()-0.5);
+          arr.sort(()=>Math.random()-0.5);
+          return arr;
+        }
+
+        // DAILY RESET (jam 00 Brasil)
+        const now = new Date();
+        const hour = now.getUTCHours() - 3; // Brasil = UTC-3
+
+        let rtpPG, rtpPRAG;
+
+        if(hour<=0){ 
+          // FULL RESET
+          rtpPG = makeRTP(PG_count);
+          rtpPRAG = makeRTP(PRAG_count);
+        } else {
+          // SOFT UPDATE
+          const old = JSON.parse(fs.readFileSync("rtp.json"));
+          rtpPG = old.provider.PG.map(v=>{
+            let change = baseRandom(-2,2);
+            let n = v + change;
+            if(n>99.9) n=99.9;
+            if(n<50) n=50;
+            return +n.toFixed(1);
+          });
+
+          rtpPRAG = old.provider.PRAGMATIC.map(v=>{
+            let change = baseRandom(-2,2);
+            let n = v + change;
+            if(n>99.9) n=99.9;
+            if(n<50) n=50;
+            return +n.toFixed(1);
+          });
         }
 
         const output = {
-          provider: {
-            PG: build(PG_count),
-            PRAGMATIC: build(PRAG_count)
+          provider:{
+            PG: rtpPG,
+            PRAGMATIC: rtpPRAG
           }
         };
 
-        fs.writeFileSync("rtp.json", JSON.stringify(output, null, 2));
-        console.log("rtp.json generated successfully with:");
-        console.log("PG:", PG_count, "games");
-        console.log("PRAGMATIC:", PRAG_count, "games");
+        fs.writeFileSync("rtp.json", JSON.stringify(output,null,2));
+
+        // SAVE HISTORY
+        const t = new Date();
+        const hh = String(t.getHours()).padStart(2,'0');
+        const mm = String(t.getMinutes()).padStart(2,'0');
+
+        fs.writeFileSync(
+          `rtp-history/${today}/${hh}-${mm}.json`,
+          JSON.stringify(output,null,2)
+        );
+
         EOF
 
-    - name: Push
+    - name: Push to Repo
       run: |
-        git config --global user.name "github-actions"
-        git config --global user.email "github-actions@github.com"
-        git add rtp.json
-        git commit -m "Auto-update RTP JSON" || echo "No changes"
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        git add rtp.json rtp-history/
+        git commit -m "Advanced RTP Update" || echo "nothing to commit"
         git push
