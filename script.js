@@ -27,7 +27,7 @@ async function fetchCSV(url) {
 
 
 //------------------------------------------------------------
-// LOAD REGISTER, LOGIN, LOGO HEADER
+// REGISTER / LOGIN / HEADER LOGO
 //------------------------------------------------------------
 async function loadLinks() {
     const list = await fetchCSV(LINK_CSV);
@@ -45,7 +45,7 @@ async function loadLinks() {
 
 
 //------------------------------------------------------------
-// BANNER SLIDER LEVEL 4
+// BANNER – SLIDE 1 BANNER PENUH
 //------------------------------------------------------------
 let bannerList = [];
 let bannerIndex = 0;
@@ -72,6 +72,7 @@ async function loadBanners() {
     });
 
     caption.textContent = bannerList[0]?.banner_text || "";
+
     initBannerEngine();
 }
 
@@ -89,10 +90,10 @@ function initBannerEngine() {
     function move(n) {
         bannerIndex = (n + bannerList.length) % bannerList.length;
 
-        const pv = perView();      // berapa banner terlihat sekaligus (1 / 2 / 3)
-        const slotWidth = 100 / pv; // width setiap item relatif
+        const pv = perView();
+        const slotWidth = 100 / pv;
 
-        // GESER 1 BANNER PENUH, BUKAN 1 PAGE
+        // SLIDE 1 BANNER PENUH
         track.style.transform = `translateX(-${bannerIndex * slotWidth}%)`;
 
         dots.forEach(d => d.classList.remove("active"));
@@ -117,25 +118,6 @@ function initBannerEngine() {
 
     // SWIPE GESTURE
     track.addEventListener("touchstart", e => startX = e.touches[0].clientX);
-    track.addEventListener("touchend", e => {
-        const dx = e.changedTouches[0].clientX - startX;
-
-        if (dx > 50) {   // swipe right
-            clearInterval(bannerTimer);
-            move(bannerIndex - 1);
-            auto();
-        }
-
-        if (dx < -50) {  // swipe left
-            clearInterval(bannerTimer);
-            move(bannerIndex + 1);
-            auto();
-        }
-    });
-}
-
-    // SWIPE
-    track.addEventListener("touchstart", e => startX = e.touches[0].clientX);
 
     track.addEventListener("touchend", e => {
         const dx = e.changedTouches[0].clientX - startX;
@@ -145,6 +127,7 @@ function initBannerEngine() {
             move(bannerIndex - 1);
             auto();
         }
+
         if (dx < -50) {
             clearInterval(bannerTimer);
             move(bannerIndex + 1);
@@ -177,7 +160,7 @@ async function loadLogoStrip() {
 
 
 //------------------------------------------------------------
-// RTP + GAMES
+// RTP + GAME GRID
 //------------------------------------------------------------
 function getColorClass(rtp) {
     if (rtp >= 90) return "rtp-green";
@@ -196,14 +179,14 @@ async function renderGames(provider="PG") {
     const allGames = await fetchCSV(GAME_CSV);
     const games = allGames.filter(g => g.provider === provider);
 
-    const rtpList = await loadRTP(provider);
+    const rtp = await loadRTP(provider);
 
     const grid = document.getElementById("game-grid");
     grid.innerHTML = "";
 
     games.forEach((g, i) => {
-        const rtp = rtpList[i] || 50;
-        const color = getColorClass(rtp);
+        const r = rtp[i] || 50;
+        const color = getColorClass(r);
 
         grid.innerHTML += `
         <div class="card">
@@ -211,10 +194,10 @@ async function renderGames(provider="PG") {
             <div class="game-name">${g.game_name}</div>
 
             <div class="rtp-bar-container">
-                <div class="rtp-bar ${color}" style="width:${rtp}%"></div>
+                <div class="rtp-bar ${color}" style="width:${r}%"></div>
             </div>
 
-            <div class="rtp-text">${rtp}%</div>
+            <div class="rtp-text">${r}%</div>
         </div>
         `;
     });
@@ -240,4 +223,3 @@ loadLinks();
 loadBanners();
 loadLogoStrip();
 renderGames("PG");
-
