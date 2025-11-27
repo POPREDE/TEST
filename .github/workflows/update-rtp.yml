@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: Checkout Repo
+    - name: Checkout
       uses: actions/checkout@v3
 
     - name: Install Node
@@ -18,56 +18,71 @@ jobs:
       with:
         node-version: "18"
 
+    - name: Download Games CSV
+      run: |
+        curl -L -o games.csv \
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv"
+
     - name: Generate RTP JSON
       run: |
-        curl -L -o games.csv "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv"
-
         node << 'EOF'
         const fs = require("fs");
 
-        const csv = fs.readFileSync("games.csv", "utf8")
+        // LOAD CSV
+        const raw = fs.readFileSync("games.csv", "utf8")
           .trim()
           .split("\n")
           .map(r => r.split(","));
 
-        const head = csv.shift();
-        const rows = csv.map(r => {
+        const head = raw.shift();
+        const rows = raw.map(r => {
           let o = {};
-          r.forEach((v,i)=> o[head[i]] = v.trim());
+          r.forEach((v,i)=>o[head[i]] = v.trim());
           return o;
         });
 
-        const pgCount = rows.filter(x=>x.provider==="PG").length;
-        const pragCount = rows.filter(x=>x.provider==="PRAGMATIC").length;
+        // COUNT PER PROVIDER
+        const PG_count = rows.filter(g => g.provider === "PG").length;
+        const PRAG_count = rows.filter(g => g.provider === "PRAGMATIC").length;
 
-        function random(min,max){return +(Math.random()*(max-min)+min).toFixed(1)}
+        // RNG FUNCTION
+        function rand(min,max){
+          return +(Math.random()*(max-min)+min).toFixed(1);
+        }
 
-        function makeRTP(total){
-          let arr=[];
-          let hi = Math.min(5,total);
-          let lo = Math.min(15,total-hi);
+        // BUILD RTP ARRAY FOR EACH PROVIDER
+        function build(count){
+          let arr = [];
 
-          for(let i=0;i<hi;i++) arr.push(random(90,99.9));
-          for(let i=0;i<lo;i++) arr.push(random(50,70));
-          while(arr.length<total) arr.push(random(70,90));
+          // Max rules
+          const high = Math.min(8,count);     // ≥ 90%
+          const low  = Math.min(20,count-high); // ≤ 70%
 
+          for(let i=0;i<high;i++) arr.push(rand(90,99.9));
+          for(let i=0;i<low;i++) arr.push(rand(50,70));
+          while(arr.length < count) arr.push(rand(70,90));
+
+          // Shuffle
           return arr.sort(()=>Math.random()-0.5);
         }
 
-        const out={
-          provider:{
-            PG: makeRTP(pgCount),
-            PRAGMATIC: makeRTP(pragCount)
+        const output = {
+          provider: {
+            PG: build(PG_count),
+            PRAGMATIC: build(PRAG_count)
           }
         };
 
-        fs.writeFileSync("rtp.json",JSON.stringify(out,null,2));
+        fs.writeFileSync("rtp.json", JSON.stringify(output, null, 2));
+        console.log("rtp.json generated successfully with:");
+        console.log("PG:", PG_count, "games");
+        console.log("PRAGMATIC:", PRAG_count, "games");
         EOF
 
-    - name: Push Changes
+    - name: Push
       run: |
-        git config --global user.email "github-actions@github.com"
         git config --global user.name "github-actions"
+        git config --global user.email "github-actions@github.com"
         git add rtp.json
-        git commit -m "Auto update RTP" || true
+        git commit -m "Auto-update RTP JSON" || echo "No changes"
         git push
