@@ -1,4 +1,4 @@
-name: Update RTP JSON (Level 5)
+name: Generate RTP JSON
 
 on:
   schedule:
@@ -6,132 +6,68 @@ on:
   workflow_dispatch:
 
 jobs:
-  update:
+  build:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v3
+    - name: Checkout Repo
+      uses: actions/checkout@v3
 
-      - name: Download Game CSV
-        run: |
-          curl -L \
-          "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv" \
-          -o gamelist.csv
+    - name: Install Node
+      uses: actions/setup-node@v3
+      with:
+        node-version: "18"
 
-      - name: Generate RTP JSON
-        run: |
-          node << 'EOF'
-          const fs = require("fs");
+    - name: Generate RTP JSON
+      run: |
+        curl -L -o games.csv "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv"
 
-          const csv = fs.readFileSync("gamelist.csv","utf8");
-          const rows = csv.trim().split("\n").map(r=>r.split(","));
-          const headers = rows.shift().map(h=>h.trim());
-          const games = rows.map(r=>{
-            let o={};
-            r.forEach((v,i)=>o[headers[i]]=v.trim());
-            return o;
-          });
+        node << 'EOF'
+        const fs = require("fs");
 
-          const pgCount = games.filter(g=>g.provider==="PG").length;
-          const pragCount = games.filter(g=>g.provider==="PRAGMATIC").length;
+        const csv = fs.readFileSync("games.csv", "utf8")
+          .trim()
+          .split("\n")
+          .map(r => r.split(","));
 
-          function rand(min,max){
-            return parseFloat((Math.random()*(max-min)+min).toFixed(1));
+        const head = csv.shift();
+        const rows = csv.map(r => {
+          let o = {};
+          r.forEach((v,i)=> o[head[i]] = v.trim());
+          return o;
+        });
+
+        const pgCount = rows.filter(x=>x.provider==="PG").length;
+        const pragCount = rows.filter(x=>x.provider==="PRAGMATIC").length;
+
+        function random(min,max){return +(Math.random()*(max-min)+min).toFixed(1)}
+
+        function makeRTP(total){
+          let arr=[];
+          let hi = Math.min(5,total);
+          let lo = Math.min(15,total-hi);
+
+          for(let i=0;i<hi;i++) arr.push(random(90,99.9));
+          for(let i=0;i<lo;i++) arr.push(random(50,70));
+          while(arr.length<total) arr.push(random(70,90));
+
+          return arr.sort(()=>Math.random()-0.5);
+        }
+
+        const out={
+          provider:{
+            PG: makeRTP(pgCount),
+            PRAGMATIC: makeRTP(pragCount)
           }
+        };
 
-          function shuffle(a){
-            for(let i=a.length-1;i>0;i--){
-              const j=Math.floor(Math.random()*(i+1));
-              [a[i],a[j]]=[a[j],a[i]];
-            }
-            return a;
-          }
+        fs.writeFileSync("rtp.json",JSON.stringify(out,null,2));
+        EOF
 
-          // Micro-variance: 0.3–2.5%
-          function shift(base){
-            let d = rand(0.3, 2.5);
-            return Math.random()>0.5 ? base + d : base - d;
-          }
-
-          function normalize(v){
-            if(v < 50) return 50.0;
-            if(v > 99.9) return 99.9;
-            return parseFloat(v.toFixed(1));
-          }
-
-          function generateBase(total){
-            let list=[];
-
-            let high = Math.min(Math.floor(Math.random()*3)+3,total);
-            for(let i=0;i<high;i++) list.push(rand(90.0,99.9));
-
-            let low = Math.min(Math.floor(Math.random()*6)+10,total-list.length);
-            for(let i=0;i<low;i++) list.push(rand(50.0,69.9));
-
-            while(list.length<total) list.push(rand(70.0,89.9));
-
-            return shuffle(list);
-          }
-
-          function applyVariance(base){
-            return base.map(v=>normalize(shift(v)));
-          }
-
-          // Detect Brazil reset (UTC -3)
-          const now = new Date();
-          const hourBR = (now.getUTCHours() + 21) % 24; // UTC → Brasilia
-
-          let useBase = false;
-          let basePG, basePR;
-
-          if(hourBR === 0){
-            // full reseed
-            basePG = generateBase(pgCount);
-            basePR = generateBase(pragCount);
-            useBase = true;
-          }
-
-          let data={};
-
-          if(useBase){
-            data = {
-              generated_at: now.toISOString(),
-              provider: {
-                PG: basePG,
-                PRAGMATIC: basePR
-              }
-            };
-          } else {
-            // load previous rtp.json if exists
-            let previous={};
-            try {
-              previous = JSON.parse(fs.readFileSync("rtp.json","utf8"));
-            } catch(e) {
-              previous = {provider:{}};
-            }
-
-            const prevPG = previous.provider.PG || generateBase(pgCount);
-            const prevPR = previous.provider.PRAGMATIC || generateBase(pragCount);
-
-            data = {
-              generated_at: now.toISOString(),
-              provider: {
-                PG: applyVariance(prevPG),
-                PRAGMATIC: applyVariance(prevPR)
-              }
-            };
-          }
-
-          fs.writeFileSync("rtp.json", JSON.stringify(data,null,2));
-          EOF
-
-      - name: Commit JSON using PAT
-        run: |
-          git config --global user.name "vini-auto"
-          git config --global user.email "actions@github.com"
-          git add rtp.json
-          git commit -m "update rtp" || echo "No changes"
-          git push https://$PAT_TOKEN@github.com/POPREDE/TEST.git HEAD:main
-        env:
-          PAT_TOKEN: ${{ secrets.PAT_TOKEN }}
+    - name: Push Changes
+      run: |
+        git config --global user.email "github-actions@github.com"
+        git config --global user.name "github-actions"
+        git add rtp.json
+        git commit -m "Auto update RTP" || true
+        git push
