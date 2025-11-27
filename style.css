@@ -1,16 +1,19 @@
+/* GLOBAL */
 body {
     margin: 0;
     background: #0d0d0d;
-    color: white;
     font-family: Arial, sans-serif;
+    color: white;
 }
 
-/* HEADER */
+/* =======================
+   HEADER WITH BIG LOGO
+   ======================= */
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px;
+    padding: 12px 14px;
     background: #111;
     border-bottom: 1px solid #222;
 }
@@ -22,195 +25,199 @@ body {
     font-weight: bold;
     border-radius: 8px;
     text-decoration: none;
+    font-size: 14px;
 }
 
 .header-logo img {
-    height: 80px;
+    height: 55px;
 }
-@media (min-width: 900px) { .header-logo img { height: 100px; } }
 
+@media (min-width: 600px) {
+    .header-logo img { height: 65px; }
+}
 
+@media (min-width: 1024px) {
+    .header-logo img { height: 75px; }
+}
 
-/* HERO */
+/* ===========================
+   HERO SECTION (TEXT + BANNER)
+   =========================== */
 .hero-container {
     display: flex;
     flex-direction: column;
-    padding: 16px;
     gap: 20px;
+    padding: 18px 14px;
 }
 
-@media (min-width: 800px) {
-    .hero-container { flex-direction: row; }
-    .hero-text { flex: 1; }
-    .hero-banner { flex: 1.5; }
-}
-
+/* LEFT TEXT */
 .hero-text h2 {
-    margin: 0;
     font-size: 24px;
+    font-weight: bold;
     color: gold;
+    margin: 0 0 8px 0;
 }
-
 .hero-text p {
-    margin-top: 8px;
-    opacity: 0.85;
+    font-size: 15px;
+    opacity: .9;
+    line-height: 1.4;
 }
 
-
-
-/* BANNER SLIDER */
+/* RIGHT BANNER */
+.hero-banner {
+    width: 100%;
+}
 .banner-slider {
     overflow: hidden;
+    border-radius: 14px;
 }
-
 .banner-track {
     display: flex;
-    gap: 12px;
-    transition: transform .4s ease;
+    gap: 10px;
+    transition: transform .45s ease;
 }
-
 .banner-item {
     flex: 0 0 100%;
+    padding: 5px;
 }
-
 .banner-item img {
     width: 100%;
-    aspect-ratio: 2/1;
-    border-radius: 14px;
+    aspect-ratio: 2 / 1;
     object-fit: cover;
+    border-radius: 12px;
 }
 
+/* CAPTION */
 .banner-caption {
     text-align: center;
-    padding: 8px;
-    opacity: .9;
+    padding: 8px 0 4px;
+    color: #eee;
 }
 
+/* DOTS */
 .banner-dots {
     text-align: center;
+    padding-bottom: 10px;
 }
 .banner-dots .dot {
     width: 10px;
     height: 10px;
     background: #666;
-    display: inline-block;
     border-radius: 50%;
     margin: 4px;
+    display: inline-block;
 }
 .banner-dots .dot.active {
     background: gold;
 }
 
-
-
-/* TITLE */
-.provider-title {
-    background: #151515;
-    text-align: center;
-    padding: 10px;
-    margin-top: 10px;
-    color: gold;
+/* DESKTOP: TEXT LEFT - BANNER RIGHT */
+@media (min-width: 800px) {
+    .hero-container {
+        flex-direction: row;
+        align-items: center;
+    }
+    .hero-text {
+        flex: 0.7;
+        padding-right: 20px;
+    }
+    .hero-banner {
+        flex: 1.3;
+    }
 }
 
-
-
-/* LOGO GRID */
+/* =======================
+   LOGO GRID
+   ======================= */
 .logo-strip {
     display: grid;
+    gap: 12px;
+    padding: 12px;
     grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-    padding: 16px;
 }
-
 .logo-strip img {
     width: 100%;
     height: 120px;
-    border-radius: 12px;
     object-fit: cover;
+    object-position: center;
+    border-radius: 12px;
 }
 
-
-
-/* PROVIDER SWITCH */
+/* =======================
+   PROVIDER SWITCH
+   ======================= */
 .provider-switch {
     text-align: center;
-    margin-top: 10px;
+    margin-top: 12px;
 }
-
 .provider {
     padding: 10px 18px;
-    margin: 5px;
     background: #222;
+    border: 1px solid #444;
     color: white;
     border-radius: 8px;
-    border: 1px solid #444;
+    margin: 5px;
 }
-
 .provider.active {
     background: gold;
     color: black;
 }
 
-
-
-/* GAME GRID */
+/* =======================
+   GAME GRID FIXED CARDS
+   ======================= */
 #game-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, 130px);
     justify-content: center;
     gap: 16px;
-    padding: 20px;
+    padding: 15px;
 }
-
 .card {
     width: 130px;
-    height: 250px;
+    height: 240px;
     background: #111;
-    border-radius: 12px;
+    border-radius: 14px;
     padding: 10px;
     display: flex;
     flex-direction: column;
-    justify-content: space-between;
 }
-
 .card img {
+    width: 100%;
     height: 150px;
-    border-radius: 10px;
     object-fit: cover;
+    border-radius: 10px;
 }
-
 .game-name {
+    margin-top: 6px;
     height: 32px;
     font-size: 12px;
     text-align: center;
-
-    overflow: hidden;
-    text-overflow: ellipsis;
-
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
 }
-
 .rtp-bar-container {
-    background: #333;
-    height: 8px;
+    height: 7px;
+    background: #2d2d2d;
+    margin-top: 6px;
     border-radius: 6px;
-    overflow: hidden;
 }
-
 .rtp-bar {
     height: 100%;
-    width: 0;
-    transition: width .5s ease;
 }
-
 .rtp-green { background: #22ff4c; }
 .rtp-yellow { background: #ffd93b; }
 .rtp-red { background: #ff4444; }
 
 .rtp-text {
     text-align: center;
+    margin-top: 5px;
     font-size: 12px;
-    margin-top: 4px;
+}
+
+/* PROVIDER TITLE */
+.provider-title {
+    text-align: center;
+    padding: 12px;
+    background: #1a1a1a;
+    color: gold;
+    margin-top: 12px;
 }
