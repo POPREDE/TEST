@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <title>POP REDE RTP</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>POPREDE RTP LIVE</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -20,40 +20,39 @@
     </header>
 
 
-    <!-- HERO (LEFT TEXT + RIGHT BANNER) -->
-    <section class="hero">
+    <!-- HERO SECTION (LEFT TEXT + RIGHT BANNER) -->
+    <section class="hero-container">
 
-        <!-- LEFT SIDE TEXT -->
-        <div class="hero-left">
-            <h2>Selamat Datang di POPREDE</h2>
-            <p>Update RTP otomatis setiap 5 menit dengan sistem tren harian.</p>
+        <div class="hero-text">
+            <h2 id="hero-title">Selamat Datang di POPREDE</h2>
+            <p id="hero-desc">Nikmati update RTP terbaru setiap 5 menit, event harian, dan bonus eksklusif dari PG Soft & Pragmatic Play.</p>
         </div>
 
-        <!-- RIGHT SIDE BANNER -->
-        <div class="hero-right">
-
+        <div class="hero-banner">
             <div class="banner-slider">
                 <div id="banner-track" class="banner-track"></div>
             </div>
 
             <div id="banner-caption" class="banner-caption"></div>
             <div id="banner-dots" class="banner-dots"></div>
-
         </div>
+
     </section>
 
 
-    <!-- PROVIDER TEXT -->
-    <div class="provider-title">POPREDE RTP PRAGMATIC PLAY & PG SOFT</div>
+    <!-- PROVIDER TITLE -->
+    <div class="provider-title">
+        POPBIS RTP PRAGMATIC PLAY & PG SOFT
+    </div>
 
 
-    <!-- PROVIDER LOGO GRID -->
+    <!-- LOGO GRID -->
     <div id="logo-strip" class="logo-strip"></div>
 
 
-    <!-- PROVIDER SWITCH BUTTONS -->
+    <!-- PROVIDER SWITCH -->
     <div class="provider-switch">
-        <button class="provider active" data-provider="PG">PG SOFT</button>
+        <button class="provider active" data-provider="PG" id="default-provider">PG SOFT</button>
         <button class="provider" data-provider="PRAGMATIC">PRAGMATIC PLAY</button>
     </div>
 
