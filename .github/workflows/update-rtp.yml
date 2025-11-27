@@ -1,4 +1,4 @@
-name: POPREDE RTP Auto Generator FINAL
+name: POPREDE RTP Auto Generator FINAL FIX
 
 on:
   schedule:
@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+
     - uses: actions/checkout@v3
 
     - uses: actions/setup-node@v3
@@ -26,24 +27,24 @@ jobs:
         node << 'EOF'
         const fs = require("fs");
 
-        // -----------------------------
-        // LOAD CSV (TAB FIX)
-        // -----------------------------
+        // ================================================
+        // 1. LOAD CSV (FINAL DELIMITER FIX: TAB , ; )
+        // ================================================
         const raw = fs.readFileSync("games.csv","utf8")
           .trim()
           .split("\n")
-          .map(r => r.split(/[\t,]+/)); // IMPORTANT FIX
+          .map(r => r.split(/[\t,;]+/));  // <-- FIX PALING PENTING
 
         const head = raw.shift();
         const rows = raw.map(r=>{
-          let o={};
+          let o = {};
           r.forEach((v,i)=>o[head[i]] = v.trim());
           return o;
         });
 
-        // -----------------------------
-        // AUTO PROVIDER DETECTION
-        // -----------------------------
+        // ================================================
+        // 2. AUTO PROVIDER DETECT (PG / PRAGMATIC)
+        // ================================================
         function detectProvider(p){
           p = (p || "").toLowerCase();
           if(p.includes("pg")) return "PG";
@@ -57,16 +58,21 @@ jobs:
         const PG_count  = PG_list.length;
         const PRAG_count= PRAG_list.length;
 
-        // -----------------------------
-        // TREND ENGINE
-        // -----------------------------
+        console.log("PG COUNT:", PG_count);
+        console.log("PRAG COUNT:", PRAG_count);
+
+        // ================================================
+        // 3. TREND ENGINE
+        // ================================================
         const today = new Date().toISOString().split("T")[0];
         const trendFile = `rtp-history/${today}/trend.json`;
 
-        let trend="normal";
+        let trend = "normal";
+
         if(!fs.existsSync(trendFile)){
           const pick = ["up","down","normal"];
           trend = pick[Math.floor(Math.random()*pick.length)];
+
           fs.mkdirSync(`rtp-history/${today}`,{recursive:true});
           fs.writeFileSync(trendFile, JSON.stringify({trend}));
         } else {
@@ -77,28 +83,25 @@ jobs:
           return +(Math.random()*(max-min)+min).toFixed(1);
         }
 
-        // -----------------------------
-        // DISTRIBUSI RTP NATURAL
-        // -----------------------------
+        // ================================================
+        // 4. DISTRIBUSI RTP NATURAL (LEVEL 2 ADVANCED)
+        // ================================================
         function generateRTP(count){
           let arr = [];
 
-          const high = Math.min(5,count);
-          const low  = Math.min(15,count-high);
+          const high = Math.min(5,count);     // 90–99
+          const low  = Math.min(15,count-high); // 50–70
 
-          // High group
           for(let i=0;i<high;i++){
             if(trend==="up") arr.push(rand(93,99.9));
             else arr.push(rand(90,96));
           }
 
-          // Low group
           for(let i=0;i<low;i++){
             if(trend==="down") arr.push(rand(50,65));
             else arr.push(rand(55,70));
           }
 
-          // Middle group
           while(arr.length < count){
             if(trend==="up") arr.push(rand(78,93));
             else if(trend==="down") arr.push(rand(63,82));
@@ -108,22 +111,22 @@ jobs:
           return arr.sort(()=>Math.random()-0.5);
         }
 
-        // -----------------------------
-        // DAILY RESET (00:00 Brazil)
-        // -----------------------------
+        // ================================================
+        // 5. DAILY RESET (00:00 Brasil)
+        // ================================================
         const now = new Date();
         const hourBR = (now.getUTCHours() - 3 + 24) % 24;
 
         let rtpPG, rtpPRAG;
 
         if(hourBR === 0){
-          rtpPG = generateRTP(PG_count);
+          rtpPG   = generateRTP(PG_count);
           rtpPRAG = generateRTP(PRAG_count);
         } else {
           let old;
-          try{
+          try {
             old = JSON.parse(fs.readFileSync("rtp.json"));
-          }catch{
+          } catch {
             old = {provider:{PG:[],PRAGMATIC:[]}};
           }
 
@@ -140,21 +143,21 @@ jobs:
           });
         }
 
-        // -----------------------------
-        // FINAL OUTPUT
-        // -----------------------------
-        const out = {
+        // ================================================
+        // 6. WRITE rtp.json (OVERRIDE)
+        // ================================================
+        const output = {
           provider:{
             PG: rtpPG,
             PRAGMATIC: rtpPRAG
           }
         };
 
-        fs.writeFileSync("rtp.json", JSON.stringify(out,null,2));
+        fs.writeFileSync("rtp.json", JSON.stringify(output,null,2));
 
-        // -----------------------------
-        // HISTORY SAVE
-        // -----------------------------
+        // ================================================
+        // 7. WRITE HISTORY FILE (per 5 menit)
+        // ================================================
         const hh = String(now.getHours()).padStart(2,"0");
         const mm = String(now.getMinutes()).padStart(2,"0");
 
@@ -163,9 +166,10 @@ jobs:
 
         fs.writeFileSync(
           `${historyDir}/${hh}-${mm}.json`,
-          JSON.stringify(out,null,2)
+          JSON.stringify(output,null,2)
         );
 
+        console.log("DONE. RTP CREATED SUCCESSFULLY.");
         EOF
 
     - name: Push Updates
@@ -173,5 +177,5 @@ jobs:
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
         git add rtp.json rtp-history/
-        git commit -m "Auto RTP Update (FULL HISTORY + TAB FIX)" || echo "No changes"
+        git commit -m "Auto RTP Update FINAL FIX" || echo "No changes"
         git push
