@@ -1,4 +1,4 @@
-name: Advanced RTP Generator (Level 2.5 AUTO PROVIDER)
+name: Advanced RTP Generator FINAL (CSV TAB Fix)
 
 on:
   schedule:
@@ -21,94 +21,132 @@ jobs:
         curl -L -o games.csv \
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv"
 
-    - name: Generate Advanced RTP JSON (AUTO PROVIDER)
+    - name: Generate RTP JSON
       run: |
         node << 'EOF'
         const fs = require("fs");
 
-        // LOAD CSV
+        // ================================
+        // CSV PARSER — FIX TAB OR COMMA
+        // ================================
         const raw = fs.readFileSync("games.csv","utf8")
           .trim()
           .split("\n")
-          .map(r=>r.split(","));
+          .map(r => r.split(/[\t,]+/));  // <--- FIX TERPENTING
 
         const head = raw.shift();
-        const rows = raw.map(r=>{
-          let o={};
+        const rows = raw.map(r => {
+          let o = {};
           r.forEach((v,i)=>o[head[i]] = v.trim());
           return o;
         });
 
-        // AUTO PROVIDER DETECT
-        function normalizeProvider(p){
+        // ================================
+        // PROVIDER DETECTION (AUTO)
+        // ================================
+        function detectProvider(p){
           p = (p || "").toLowerCase();
           if(p.includes("pg")) return "PG";
           if(p.includes("prag")) return "PRAGMATIC";
           return "OTHER";
         }
 
-        const PG_count = rows.filter(x => normalizeProvider(x.provider) === "PG").length;
-        const PRAG_count = rows.filter(x => normalizeProvider(x.provider) === "PRAGMATIC").length;
+        const PG_count    = rows.filter(x => detectProvider(x.provider)==="PG").length;
+        const PRAG_count  = rows.filter(x => detectProvider(x.provider)==="PRAGMATIC").length;
 
-        function baseRandom(min,max){
-          return +(Math.random()*(max-min)+min).toFixed(1);
-        }
 
-        // TREND DAILY
+        // ================================
+        // TREND ENGINE (1x per hari)
+        // ================================
         const today = new Date().toISOString().split("T")[0];
         const trendFile = `rtp-history/${today}/trend.json`;
 
-        let trend="normal";
+        let trend = "normal";
         if(!fs.existsSync(trendFile)){
-          const pick = ["up","down","normal"];
-          trend = pick[Math.floor(Math.random()*pick.length)];
-          fs.mkdirSync(`rtp-history/${today}`,{recursive:true});
+          const options = ["up","down","normal"];
+          trend = options[Math.floor(Math.random()*options.length)];
+          fs.mkdirSync(`rtp-history/${today}`, {recursive: true});
           fs.writeFileSync(trendFile, JSON.stringify({trend}));
         } else {
           trend = JSON.parse(fs.readFileSync(trendFile)).trend;
         }
 
-        // DISTRIBUSI LEBIH NATURAL
-        function makeRTP(count){
-          let arr=[];
-          let high = Math.min(5,count);
-          let low  = Math.min(15,count-high);
 
+        // ================================
+        // RANDOM HELPER
+        // ================================
+        function rand(min,max){
+          return +(Math.random()*(max-min)+min).toFixed(1);
+        }
+
+
+        // ================================
+        // DISTRIBUSI RTP (NATURAL)
+        // ================================
+        function generateRTP(count){
+          let arr = [];
+
+          const high = Math.min(5,count);
+          const low  = Math.min(15,count - high);
+
+          // HIGH (90–99%)
           for(let i=0;i<high;i++){
-            arr.push(trend==="up" ? baseRandom(93,99.9) : baseRandom(90,96));
+            if(trend==="up") arr.push(rand(93,99.9));
+            else arr.push(rand(90,96));
           }
+
+          // LOW (50–70%)
           for(let i=0;i<low;i++){
-            arr.push(trend==="down" ? baseRandom(50,66) : baseRandom(55,70));
+            if(trend==="down") arr.push(rand(50,65));
+            else arr.push(rand(55,70));
           }
+
+          // MIDDLE (70–90%)
           while(arr.length < count){
-            if(trend==="up") arr.push(baseRandom(78,93));
-            else if(trend==="down") arr.push(baseRandom(65,82));
-            else arr.push(baseRandom(70,90));
+            if(trend==="up") arr.push(rand(78,92));
+            else if(trend==="down") arr.push(rand(63,82));
+            else arr.push(rand(70,90));
           }
 
           return arr.sort(()=>Math.random()-0.5);
         }
 
-        // RESET HARIAN
+
+        // ================================
+        // RESET HARIAN (00:00 Brazil)
+        // ================================
         const now = new Date();
-        const hour = now.getUTCHours() - 3;
+        const hour = (now.getUTCHours() - 3 + 24) % 24;  // jam brasil
+
         let rtpPG, rtpPRAG;
 
-        if(hour<=0){
-          rtpPG  = makeRTP(PG_count);
-          rtpPRAG = makeRTP(PRAG_count);
+        if(hour === 0){
+          // FULL RESET
+          rtpPG    = generateRTP(PG_count);
+          rtpPRAG  = generateRTP(PRAG_count);
         } else {
+          // SOFT UPDATE
           const old = JSON.parse(fs.readFileSync("rtp.json"));
+
           rtpPG = old.provider.PG.map(v=>{
-            let n = v + baseRandom(-2,2);
-            return Math.max(50, Math.min(99.9, n));
+            let n = v + rand(-2,2);
+            if(n>99.9) n=99.9;
+            if(n<50) n=50;
+            return +n.toFixed(1);
           });
+
           rtpPRAG = old.provider.PRAGMATIC.map(v=>{
-            let n = v + baseRandom(-2,2);
-            return Math.max(50, Math.min(99.9, n));
+            let n = v + rand(-2,2);
+            if(n>99.9) n=99.9;
+            if(n<50) n=50;
+            return +n.toFixed(1);
           });
         }
 
+
+        // ================================
+        // FINAL OUTPUT
+        // ================================
         const output = {
           provider:{
             PG: rtpPG,
@@ -118,12 +156,24 @@ jobs:
 
         fs.writeFileSync("rtp.json", JSON.stringify(output,null,2));
 
+
+        // ================================
+        // SIMPAN HISTORY
+        // ================================
+        const hh = String(now.getHours()).padStart(2,"0");
+        const mm = String(now.getMinutes()).padStart(2,"0");
+
+        fs.writeFileSync(
+          `rtp-history/${today}/${hh}-${mm}.json`,
+          JSON.stringify(output,null,2)
+        );
+
         EOF
 
-    - name: Push
+    - name: Push Updated RTP
       run: |
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
         git add rtp.json rtp-history/
-        git commit -m "Auto RTP update with provider detection" || echo "no changes"
+        git commit -m "FINAL RTP Update (TAB CSV Fix)" || echo "No changes"
         git push
