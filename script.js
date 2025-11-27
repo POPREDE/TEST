@@ -27,7 +27,7 @@ async function fetchCSV(url) {
 
 
 //------------------------------------------------------------
-// LOAD REGISTER / LOGIN / HEADER LOGO
+// REGISTER / LOGIN / HEADER LOGO
 //------------------------------------------------------------
 async function loadLinks() {
     const list = await fetchCSV(LINK_CSV);
@@ -45,7 +45,7 @@ async function loadLinks() {
 
 
 //------------------------------------------------------------
-// BANNER SLIDER — FIX "1 BANNER PER SLIDE"
+// BANNER SLIDER — FINAL FIX 2 (REAL OFFSET, 100% AKURAT)
 //------------------------------------------------------------
 let bannerList = [];
 let bannerIndex = 0;
@@ -72,14 +72,7 @@ async function loadBanners() {
     });
 
     caption.textContent = bannerList[0]?.banner_text || "";
-
     initBannerEngine();
-}
-
-function getBannerWidth() {
-    const item = document.querySelector(".banner-item");
-    if (!item) return 0;
-    return item.offsetWidth + 10; // banner width + gap
 }
 
 function initBannerEngine() {
@@ -92,7 +85,8 @@ function initBannerEngine() {
     function move(n) {
         bannerIndex = (n + bannerList.length) % bannerList.length;
 
-        const offset = -(getBannerWidth() * bannerIndex);
+        // ⭐ REAL SLIDE: geser 1 banner penuh berdasarkan posisi asli
+        const offset = items[bannerIndex].offsetLeft * -1;
         track.style.transform = `translateX(${offset}px)`;
 
         dots.forEach(d => d.classList.remove("active"));
@@ -110,7 +104,7 @@ function initBannerEngine() {
         };
     });
 
-    // AUTO SLIDE (1 banner)
+    // AUTO SLIDE (GESER 1 BANNER)
     function auto() {
         bannerTimer = setInterval(() => move(bannerIndex + 1), 3500);
     }
@@ -121,22 +115,22 @@ function initBannerEngine() {
     track.addEventListener("touchend", e => {
         const dx = e.changedTouches[0].clientX - startX;
 
-        if (dx > 50) {  // swipe right
+        if (dx > 50) {
             clearInterval(bannerTimer);
             move(bannerIndex - 1);
             auto();
         }
 
-        if (dx < -50) { // swipe left
+        if (dx < -50) {
             clearInterval(bannerTimer);
             move(bannerIndex + 1);
             auto();
         }
     });
 
-    // FIX resize perubahan ukuran layar
+    // FIX RESIZE (agar posisi tidak berubah saat layar berubah)
     window.addEventListener("resize", () => {
-        const offset = -(getBannerWidth() * bannerIndex);
+        const offset = items[bannerIndex].offsetLeft * -1;
         track.style.transform = `translateX(${offset}px)`;
     });
 }
@@ -222,7 +216,7 @@ document.querySelectorAll(".provider").forEach(btn=>{
 
 
 //------------------------------------------------------------
-// INIT ALL (MULAI WEBSITE)
+// INIT ALL
 //------------------------------------------------------------
 loadLinks();
 loadBanners();
