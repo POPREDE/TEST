@@ -6,20 +6,18 @@ body {
     color: white;
 }
 
-/* ======================================
-   HEADER BAR WITH CENTER BIG LOGO
-   ====================================== */
-
+/* =======================
+   HEADER WITH BIG LOGO
+   ======================= */
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    padding: 12px 14px;
     background: #111;
-    padding: 10px 14px;
     border-bottom: 1px solid #222;
 }
 
-/* BUTTON */
 .header-btn {
     padding: 8px 14px;
     background: gold;
@@ -28,119 +26,114 @@ body {
     border-radius: 8px;
     text-decoration: none;
     font-size: 14px;
-    white-space: nowrap;
 }
 
-/* LOGO WRAPPER */
-.header-logo {
-    flex: 1;
-    display: flex;
-    justify-content: center;
-    pointer-events: none;
-}
-
-/* LOGO SIZE */
 .header-logo img {
-    height: 46px;             /* DEFAULT SIZE */
-    object-fit: contain;
+    height: 55px;
 }
 
-/* TABLET */
 @media (min-width: 600px) {
-    .header-logo img {
-        height: 55px;         /* SLIGHTLY BIGGER */
-    }
+    .header-logo img { height: 65px; }
 }
 
-/* PC */
 @media (min-width: 1024px) {
-    .header-logo img {
-        height: 65px;         /* BIGGER ON PC */
-    }
+    .header-logo img { height: 75px; }
 }
 
+/* ===========================
+   HERO SECTION (TEXT + BANNER)
+   =========================== */
+.hero-container {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 18px 14px;
+}
 
-/* ======================================
-   BANNER LEVEL 4 — MULTI SLIDE + LOOP
-   ====================================== */
+/* LEFT TEXT */
+.hero-text h2 {
+    font-size: 24px;
+    font-weight: bold;
+    color: gold;
+    margin: 0 0 8px 0;
+}
+.hero-text p {
+    font-size: 15px;
+    opacity: .9;
+    line-height: 1.4;
+}
 
-.banner-container {
+/* RIGHT BANNER */
+.hero-banner {
     width: 100%;
-    overflow: hidden;
-    padding: 10px 0;
 }
-
+.banner-slider {
+    overflow: hidden;
+    border-radius: 14px;
+}
 .banner-track {
     display: flex;
     gap: 10px;
     transition: transform .45s ease;
 }
-
 .banner-item {
-    flex: 0 0 calc(100% / 1);
+    flex: 0 0 100%;
     padding: 5px;
-    opacity: 0.9;
-    transition: opacity .4s;
 }
-.banner-item.active {
-    opacity: 1;
-}
-
 .banner-item img {
     width: 100%;
-    aspect-ratio: 2/1;
+    aspect-ratio: 2 / 1;
     object-fit: cover;
     border-radius: 12px;
-}
-
-/* RESPONSIVE BREAKPOINTS */
-@media (min-width: 600px) {
-    .banner-item { flex: 0 0 calc(100% / 2); }
-}
-@media (min-width: 1024px) {
-    .banner-item { flex: 0 0 calc(100% / 3); }
 }
 
 /* CAPTION */
 .banner-caption {
     text-align: center;
-    padding: 10px 0;
-    font-size: 15px;
-    color: #f1f1f1;
+    padding: 8px 0 4px;
+    color: #eee;
 }
 
 /* DOTS */
 .banner-dots {
     text-align: center;
-    padding-bottom: 12px;
+    padding-bottom: 10px;
 }
 .banner-dots .dot {
     width: 10px;
     height: 10px;
     background: #666;
+    border-radius: 50%;
     margin: 4px;
     display: inline-block;
-    border-radius: 50%;
 }
 .banner-dots .dot.active {
     background: gold;
 }
 
-/* PROVIDER TITLE */
-.provider-title {
-    text-align: center;
-    background: #1a1a1a;
-    padding: 10px;
-    color: gold;
-    margin-top: 10px;
+/* DESKTOP: TEXT LEFT - BANNER RIGHT */
+@media (min-width: 800px) {
+    .hero-container {
+        flex-direction: row;
+        align-items: center;
+    }
+    .hero-text {
+        flex: 0.7;
+        padding-right: 20px;
+    }
+    .hero-banner {
+        flex: 1.3;
+    }
 }
 
-/* LOGOGRID */
+/* =======================
+   LOGO GRID
+   ======================= */
 .logo-strip {
     display: grid;
+    gap: 12px;
+    padding: 12px;
     grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-    padding: 12px 15px;
 }
 .logo-strip img {
     width: 100%;
@@ -150,7 +143,9 @@ body {
     border-radius: 12px;
 }
 
-/* PROVIDER SWITCH */
+/* =======================
+   PROVIDER SWITCH
+   ======================= */
 .provider-switch {
     text-align: center;
     margin-top: 12px;
@@ -159,16 +154,18 @@ body {
     padding: 10px 18px;
     background: #222;
     border: 1px solid #444;
-    margin: 5px;
-    border-radius: 8px;
     color: white;
+    border-radius: 8px;
+    margin: 5px;
 }
 .provider.active {
     background: gold;
     color: black;
 }
 
-/* GRID RTP */
+/* =======================
+   GAME GRID FIXED CARDS
+   ======================= */
 #game-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, 130px);
@@ -194,9 +191,8 @@ body {
 .game-name {
     margin-top: 6px;
     height: 32px;
-    text-align: center;
     font-size: 12px;
-    overflow: hidden;
+    text-align: center;
 }
 .rtp-bar-container {
     height: 7px;
@@ -206,14 +202,22 @@ body {
 }
 .rtp-bar {
     height: 100%;
-    transition: width .4s;
 }
-.rtp-green  { background: #22ff4c; }
+.rtp-green { background: #22ff4c; }
 .rtp-yellow { background: #ffd93b; }
-.rtp-red    { background: #ff4444; }
+.rtp-red { background: #ff4444; }
+
 .rtp-text {
     text-align: center;
     margin-top: 5px;
     font-size: 12px;
 }
 
+/* PROVIDER TITLE */
+.provider-title {
+    text-align: center;
+    padding: 12px;
+    background: #1a1a1a;
+    color: gold;
+    margin-top: 12px;
+}
