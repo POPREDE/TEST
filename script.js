@@ -17,20 +17,20 @@ async function fetchCSV(url) {
     const text = await res.text();
     const rows = text.split("\n").map(r => r.split(","));
     const head = rows.shift().map(h => h.trim());
+
     return rows.map(r=>{
         let o={};
-        r.forEach((v,i)=>o[head[i]]=v.trim());
+        r.forEach((v,i)=>o[head[i]] = v.trim());
         return o;
     });
 }
 
 
 //------------------------------------------------------------
-// LINKS + LOGO
+// LOAD REGISTER, LOGIN, LOGO HEADER
 //------------------------------------------------------------
 async function loadLinks() {
     const list = await fetchCSV(LINK_CSV);
-
     const clean = x => x?.trim().toLowerCase();
 
     document.getElementById("btn-register").href =
@@ -45,12 +45,12 @@ async function loadLinks() {
 
 
 //------------------------------------------------------------
-// BANNER LEVEL 4
+// BANNER SLIDER LEVEL 4
 //------------------------------------------------------------
 let bannerList = [];
 let bannerIndex = 0;
-let bannerTimer;
-let touchStartX = 0;
+let bannerTimer = null;
+let startX = 0;
 
 async function loadBanners() {
     bannerList = await fetchCSV(BANNER_CSV);
@@ -72,25 +72,23 @@ async function loadBanners() {
     });
 
     caption.textContent = bannerList[0]?.banner_text || "";
-
-    startBannerEngine();
+    initBannerEngine();
 }
 
-function getPerView() {
+function perView() {
     if (innerWidth >= 1024) return 3;
     if (innerWidth >= 600) return 2;
     return 1;
 }
 
-function startBannerEngine() {
-
+function initBannerEngine() {
     const track = document.getElementById("banner-track");
-    const dots = document.querySelectorAll(".banner-dots .dot");
+    const dots  = document.querySelectorAll(".banner-dots .dot");
     const caption = document.getElementById("banner-caption");
 
     function move(n) {
         bannerIndex = (n + bannerList.length) % bannerList.length;
-        const pv = getPerView();
+        const pv = perView();
 
         track.style.transform = `translateX(-${bannerIndex * (100 / pv)}%)`;
 
@@ -111,16 +109,13 @@ function startBannerEngine() {
     function auto() {
         bannerTimer = setInterval(() => move(bannerIndex + 1), 4000);
     }
-
     auto();
 
-    // SWIPE SUPPORT
-    track.addEventListener("touchstart", e => {
-        touchStartX = e.touches[0].clientX;
-    });
+    // SWIPE
+    track.addEventListener("touchstart", e => startX = e.touches[0].clientX);
 
     track.addEventListener("touchend", e => {
-        let dx = e.changedTouches[0].clientX - touchStartX;
+        const dx = e.changedTouches[0].clientX - startX;
 
         if (dx > 50) {
             clearInterval(bannerTimer);
@@ -137,27 +132,29 @@ function startBannerEngine() {
 
 
 //------------------------------------------------------------
-// LOGO STRIP
+// LOGO GRID
 //------------------------------------------------------------
 async function loadLogoStrip() {
     const list = await fetchCSV(LOGO_CSV);
-    const wrap = document.getElementById("logo-strip");
+    const grid = document.getElementById("logo-strip");
 
-    wrap.innerHTML = "";
+    grid.innerHTML = "";
 
-    const logos = list.filter(l =>
-        l.provider.toLowerCase().includes("pg") ||
-        l.provider.toLowerCase().includes("pragmatic")
-    ).slice(0,2);
+    const logos = list
+        .filter(l =>
+            l.provider.toLowerCase().includes("pg") ||
+            l.provider.toLowerCase().includes("pragmatic")
+        )
+        .slice(0, 2);
 
-    logos.forEach(logo=>{
-        wrap.innerHTML += `<img src="${logo.logo_url}">`;
+    logos.forEach(logo => {
+        grid.innerHTML += `<img src="${logo.logo_url}">`;
     });
 }
 
 
 //------------------------------------------------------------
-// RTP GRID
+// RTP + GAMES
 //------------------------------------------------------------
 function getColorClass(rtp) {
     if (rtp >= 90) return "rtp-green";
@@ -166,7 +163,7 @@ function getColorClass(rtp) {
 }
 
 async function loadRTP(provider) {
-    const res = await fetch(RTP_JSON+"?cache="+Date.now());
+    const res = await fetch(RTP_JSON + "?cache=" + Date.now());
     const json = await res.json();
     return json.provider[provider];
 }
@@ -174,16 +171,16 @@ async function loadRTP(provider) {
 async function renderGames(provider="PG") {
 
     const allGames = await fetchCSV(GAME_CSV);
-    const games = allGames.filter(x => x.provider === provider);
+    const games = allGames.filter(g => g.provider === provider);
 
-    const rtp = await loadRTP(provider);
+    const rtpList = await loadRTP(provider);
 
     const grid = document.getElementById("game-grid");
     grid.innerHTML = "";
 
-    games.forEach((g,i)=>{
-        const r = rtp[i] || 50;
-        const color = getColorClass(r);
+    games.forEach((g, i) => {
+        const rtp = rtpList[i] || 50;
+        const color = getColorClass(rtp);
 
         grid.innerHTML += `
         <div class="card">
@@ -191,10 +188,12 @@ async function renderGames(provider="PG") {
             <div class="game-name">${g.game_name}</div>
 
             <div class="rtp-bar-container">
-                <div class="rtp-bar ${color}" style="width:${r}%"></div>
+                <div class="rtp-bar ${color}" style="width:${rtp}%"></div>
             </div>
-            <div class="rtp-text">${r}%</div>
-        </div>`;
+
+            <div class="rtp-text">${rtp}%</div>
+        </div>
+        `;
     });
 }
 
@@ -203,7 +202,7 @@ async function renderGames(provider="PG") {
 // PROVIDER SWITCH
 //------------------------------------------------------------
 document.querySelectorAll(".provider").forEach(btn=>{
-    btn.onclick = ()=>{
+    btn.onclick = () => {
         document.querySelectorAll(".provider").forEach(b=>b.classList.remove("active"));
         btn.classList.add("active");
         renderGames(btn.dataset.provider);
@@ -212,10 +211,9 @@ document.querySelectorAll(".provider").forEach(btn=>{
 
 
 //------------------------------------------------------------
-// INIT
+// INIT ALL
 //------------------------------------------------------------
 loadLinks();
 loadBanners();
 loadLogoStrip();
 renderGames("PG");
-
