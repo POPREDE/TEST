@@ -88,9 +88,12 @@ function initBannerEngine() {
 
     function move(n) {
         bannerIndex = (n + bannerList.length) % bannerList.length;
-        const pv = perView();
 
-        track.style.transform = `translateX(-${bannerIndex * (100 / pv)}%)`;
+        const pv = perView();      // berapa banner terlihat sekaligus (1 / 2 / 3)
+        const slotWidth = 100 / pv; // width setiap item relatif
+
+        // GESER 1 BANNER PENUH, BUKAN 1 PAGE
+        track.style.transform = `translateX(-${bannerIndex * slotWidth}%)`;
 
         dots.forEach(d => d.classList.remove("active"));
         dots[bannerIndex].classList.add("active");
@@ -107,9 +110,29 @@ function initBannerEngine() {
     });
 
     function auto() {
-        bannerTimer = setInterval(() => move(bannerIndex + 1), 4000);
+        bannerTimer = setInterval(() => move(bannerIndex + 1), 3500);
     }
+
     auto();
+
+    // SWIPE GESTURE
+    track.addEventListener("touchstart", e => startX = e.touches[0].clientX);
+    track.addEventListener("touchend", e => {
+        const dx = e.changedTouches[0].clientX - startX;
+
+        if (dx > 50) {   // swipe right
+            clearInterval(bannerTimer);
+            move(bannerIndex - 1);
+            auto();
+        }
+
+        if (dx < -50) {  // swipe left
+            clearInterval(bannerTimer);
+            move(bannerIndex + 1);
+            auto();
+        }
+    });
+}
 
     // SWIPE
     track.addEventListener("touchstart", e => startX = e.touches[0].clientX);
@@ -217,3 +240,4 @@ loadLinks();
 loadBanners();
 loadLogoStrip();
 renderGames("PG");
+
