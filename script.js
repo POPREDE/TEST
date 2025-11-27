@@ -31,7 +31,7 @@ async function fetchCSV(url) {
 //------------------------------------------------------------
 async function loadLinks() {
     const list = await fetchCSV(LINK_CSV);
-    const clean = x => x?.trim().toLowerCase();
+    const clean = s => s?.trim().toLowerCase();
 
     document.getElementById("btn-register").href =
         list.find(x => clean(x.key) === "register")?.value || "#";
@@ -45,7 +45,7 @@ async function loadLinks() {
 
 
 //------------------------------------------------------------
-// BANNER SLIDER — FINAL FIX 2 (REAL OFFSET, 100% AKURAT)
+// BANNER SLIDER — FINAL FIX 2
 //------------------------------------------------------------
 let bannerList = [];
 let bannerIndex = 0;
@@ -53,6 +53,7 @@ let bannerTimer = null;
 let startX = 0;
 
 async function loadBanners() {
+
     bannerList = await fetchCSV(BANNER_CSV);
 
     const track = document.getElementById("banner-track");
@@ -72,6 +73,7 @@ async function loadBanners() {
     });
 
     caption.textContent = bannerList[0]?.banner_text || "";
+
     initBannerEngine();
 }
 
@@ -85,7 +87,7 @@ function initBannerEngine() {
     function move(n) {
         bannerIndex = (n + bannerList.length) % bannerList.length;
 
-        // ⭐ REAL SLIDE: geser 1 banner penuh berdasarkan posisi asli
+        // REAL positions (100% exact)
         const offset = items[bannerIndex].offsetLeft * -1;
         track.style.transform = `translateX(${offset}px)`;
 
@@ -95,7 +97,6 @@ function initBannerEngine() {
         caption.textContent = bannerList[bannerIndex]?.banner_text || "";
     }
 
-    // DOT CLICK
     dots.forEach(dot=>{
         dot.onclick = () => {
             clearInterval(bannerTimer);
@@ -104,31 +105,20 @@ function initBannerEngine() {
         };
     });
 
-    // AUTO SLIDE (GESER 1 BANNER)
     function auto() {
         bannerTimer = setInterval(() => move(bannerIndex + 1), 3500);
     }
     auto();
 
-    // SWIPE TOUCH
     track.addEventListener("touchstart", e => startX = e.touches[0].clientX);
+
     track.addEventListener("touchend", e => {
         const dx = e.changedTouches[0].clientX - startX;
 
-        if (dx > 50) {
-            clearInterval(bannerTimer);
-            move(bannerIndex - 1);
-            auto();
-        }
-
-        if (dx < -50) {
-            clearInterval(bannerTimer);
-            move(bannerIndex + 1);
-            auto();
-        }
+        if (dx > 50) { move(bannerIndex - 1); }
+        if (dx < -50) { move(bannerIndex + 1); }
     });
 
-    // FIX RESIZE (agar posisi tidak berubah saat layar berubah)
     window.addEventListener("resize", () => {
         const offset = items[bannerIndex].offsetLeft * -1;
         track.style.transform = `translateX(${offset}px)`;
@@ -146,15 +136,13 @@ async function loadLogoStrip() {
     grid.innerHTML = "";
 
     const logos = list
-        .filter(l =>
-            l.provider.toLowerCase().includes("pg") ||
-            l.provider.toLowerCase().includes("pragmatic")
+        .filter(x =>
+            x.provider.toLowerCase().includes("pg") ||
+            x.provider.toLowerCase().includes("pragmatic")
         )
         .slice(0, 2);
 
-    logos.forEach(logo => {
-        grid.innerHTML += `<img src="${logo.logo_url}">`;
-    });
+    logos.forEach(l => grid.innerHTML += `<img src="${l.logo_url}">`);
 }
 
 
@@ -175,8 +163,8 @@ async function loadRTP(provider) {
 
 async function renderGames(provider="PG") {
 
-    const allGames = await fetchCSV(GAME_CSV);
-    const games = allGames.filter(g => g.provider === provider);
+    const all = await fetchCSV(GAME_CSV);
+    const games = all.filter(x => x.provider === provider);
 
     const rtp = await loadRTP(provider);
 
@@ -184,20 +172,20 @@ async function renderGames(provider="PG") {
     grid.innerHTML = "";
 
     games.forEach((g, i) => {
-        const r = rtp[i] || 50;
-        const color = getColorClass(r);
+        const val = rtp[i] || 50;
+        const color = getColorClass(val);
 
         grid.innerHTML += `
-        <div class="card">
-            <img src="${g.image_url}">
-            <div class="game-name">${g.game_name}</div>
+            <div class="card">
+                <img src="${g.image_url}">
+                <div class="game-name">${g.game_name}</div>
 
-            <div class="rtp-bar-container">
-                <div class="rtp-bar ${color}" style="width:${r}%"></div>
+                <div class="rtp-bar-container">
+                    <div class="rtp-bar ${color}" style="width:${val}%"></div>
+                </div>
+
+                <div class="rtp-text">${val}%</div>
             </div>
-
-            <div class="rtp-text">${r}%</div>
-        </div>
         `;
     });
 }
@@ -207,7 +195,7 @@ async function renderGames(provider="PG") {
 // PROVIDER SWITCH
 //------------------------------------------------------------
 document.querySelectorAll(".provider").forEach(btn=>{
-    btn.onclick = () => {
+    btn.onclick = ()=>{
         document.querySelectorAll(".provider").forEach(b=>b.classList.remove("active"));
         btn.classList.add("active");
         renderGames(btn.dataset.provider);
