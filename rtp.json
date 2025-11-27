@@ -1,11 +1,6 @@
 {
-  "generated_at": "2025-11-27T21:42:41.655Z",
   "provider": {
-    "PG": [
-      90
-    ],
-    "PRAGMATIC": [
-      90
-    ]
+    "PG": [],
+    "PRAGMATIC": []
   }
 }
