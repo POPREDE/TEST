@@ -1,8 +1,8 @@
 body {
     margin: 0;
     background: #0d0d0d;
-    font-family: Arial, sans-serif;
     color: white;
+    font-family: Arial, sans-serif;
 }
 
 /* HEADER */
@@ -12,7 +12,6 @@ body {
     align-items: center;
     padding: 12px;
     background: #111;
-    border-bottom: 1px solid #222;
 }
 
 .header-btn {
@@ -25,17 +24,28 @@ body {
 }
 
 .header-logo img {
-    height: 70px;
+    height: 80px;
 }
-@media (min-width: 600px) { .header-logo img { height: 80px; } }
-@media (min-width: 1024px) { .header-logo img { height: 90px; } }
+@media (min-width: 900px) {
+    .header-logo img {
+        height: 100px;
+    }
+}
 
 /* HERO */
 .hero-container {
+    padding: 16px;
     display: flex;
     flex-direction: column;
-    padding: 16px;
     gap: 20px;
+}
+
+@media (min-width: 800px) {
+    .hero-container {
+        flex-direction: row;
+    }
+    .hero-text { flex: 1; }
+    .hero-banner { flex: 1.5; }
 }
 
 .hero-text h2 {
@@ -43,45 +53,35 @@ body {
     color: gold;
     font-size: 24px;
 }
-.hero-text p {
-    margin-top: 6px;
-    opacity: 0.85;
-}
-
-/* DESKTOP */
-@media (min-width: 800px) {
-    .hero-container {
-        flex-direction: row;
-        align-items: center;
-    }
-    .hero-text { flex: 0.7; }
-    .hero-banner { flex: 1.3; }
-}
 
 /* BANNER */
 .banner-slider {
     overflow: hidden;
-    border-radius: 14px;
 }
+
 .banner-track {
     display: flex;
     gap: 12px;
     transition: transform .4s ease;
 }
+
 .banner-item {
     flex: 0 0 100%;
 }
+
 .banner-item img {
     width: 100%;
     aspect-ratio: 2/1;
-    object-fit: cover;
     border-radius: 12px;
+    object-fit: cover;
 }
 
 .banner-caption {
     text-align: center;
-    padding: 8px 0;
+    padding: 8px;
+    opacity: .9;
 }
+
 .banner-dots {
     text-align: center;
 }
@@ -90,20 +90,29 @@ body {
     height: 10px;
     background: #666;
     display: inline-block;
-    margin: 4px;
+    margin: 3px;
     border-radius: 50%;
 }
 .banner-dots .dot.active {
     background: gold;
 }
 
+/* PROVIDER TITLE */
+.provider-title {
+    background: #151515;
+    text-align: center;
+    padding: 10px;
+    color: gold;
+}
+
 /* LOGO GRID */
 .logo-strip {
     display: grid;
-    gap: 12px;
-    padding: 16px;
     grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+    padding: 16px;
 }
+
 .logo-strip img {
     width: 100%;
     height: 120px;
@@ -112,13 +121,18 @@ body {
 }
 
 /* PROVIDER SWITCH */
-.provider-switch { text-align: center; }
+.provider-switch {
+    text-align: center;
+    margin-top: 10px;
+}
+
 .provider {
-    margin: 8px;
     padding: 10px 18px;
+    margin: 5px;
     background: #222;
-    border-radius: 8px;
     border: 1px solid #444;
+    border-radius: 8px;
+    color: white;
 }
 .provider.active {
     background: gold;
@@ -136,33 +150,43 @@ body {
 
 .card {
     width: 130px;
-    height: 240px;
+    height: 250px;
     background: #111;
-    border-radius: 16px;
     padding: 10px;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .card img {
-    width: 100%;
     height: 150px;
-    border-radius: 12px;
     object-fit: cover;
+    border-radius: 10px;
 }
 
 .game-name {
-    text-align: center;
+    height: 32px;
     font-size: 12px;
-    margin-top: 6px;
+    text-align: center;
+
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
 }
 
 .rtp-bar-container {
-    height: 7px;
-    background: #2d2d2d;
-    margin-top: 6px;
+    background: #333;
+    height: 8px;
     border-radius: 6px;
 }
 
-.rtp-bar { height: 100%; transition: width .3s; }
+.rtp-bar {
+    height: 100%;
+    width: 0;
+    transition: width .6s ease;
+}
 
 .rtp-green { background: #22ff4c; }
 .rtp-yellow { background: #ffd93b; }
@@ -170,13 +194,6 @@ body {
 
 .rtp-text {
     text-align: center;
-    margin-top: 6px;
     font-size: 12px;
-}
-
-.provider-title {
-    background: #1a1a1a;
-    text-align: center;
-    padding: 10px;
-    color: gold;
+    margin-top: 4px;
 }
