@@ -27,7 +27,7 @@ async function fetchCSV(url) {
 
 
 //------------------------------------------------------------
-// REGISTER / LOGIN / HEADER LOGO
+// LOAD REGISTER / LOGIN / HEADER LOGO
 //------------------------------------------------------------
 async function loadLinks() {
     const list = await fetchCSV(LINK_CSV);
@@ -45,7 +45,7 @@ async function loadLinks() {
 
 
 //------------------------------------------------------------
-// BANNER – SLIDE 1 BANNER PENUH
+// BANNER SLIDER — FIX "1 BANNER PER SLIDE"
 //------------------------------------------------------------
 let bannerList = [];
 let bannerIndex = 0;
@@ -76,25 +76,24 @@ async function loadBanners() {
     initBannerEngine();
 }
 
-function perView() {
-    if (innerWidth >= 1024) return 3;
-    if (innerWidth >= 600) return 2;
-    return 1;
+function getBannerWidth() {
+    const item = document.querySelector(".banner-item");
+    if (!item) return 0;
+    return item.offsetWidth + 10; // banner width + gap
 }
 
 function initBannerEngine() {
+
     const track = document.getElementById("banner-track");
+    const items = document.querySelectorAll(".banner-item");
     const dots  = document.querySelectorAll(".banner-dots .dot");
     const caption = document.getElementById("banner-caption");
 
     function move(n) {
         bannerIndex = (n + bannerList.length) % bannerList.length;
 
-        const pv = perView();
-        const slotWidth = 100 / pv;
-
-        // SLIDE 1 BANNER PENUH
-        track.style.transform = `translateX(-${bannerIndex * slotWidth}%)`;
+        const offset = -(getBannerWidth() * bannerIndex);
+        track.style.transform = `translateX(${offset}px)`;
 
         dots.forEach(d => d.classList.remove("active"));
         dots[bannerIndex].classList.add("active");
@@ -102,6 +101,7 @@ function initBannerEngine() {
         caption.textContent = bannerList[bannerIndex]?.banner_text || "";
     }
 
+    // DOT CLICK
     dots.forEach(dot=>{
         dot.onclick = () => {
             clearInterval(bannerTimer);
@@ -110,29 +110,34 @@ function initBannerEngine() {
         };
     });
 
+    // AUTO SLIDE (1 banner)
     function auto() {
         bannerTimer = setInterval(() => move(bannerIndex + 1), 3500);
     }
-
     auto();
 
-    // SWIPE GESTURE
+    // SWIPE TOUCH
     track.addEventListener("touchstart", e => startX = e.touches[0].clientX);
-
     track.addEventListener("touchend", e => {
         const dx = e.changedTouches[0].clientX - startX;
 
-        if (dx > 50) {
+        if (dx > 50) {  // swipe right
             clearInterval(bannerTimer);
             move(bannerIndex - 1);
             auto();
         }
 
-        if (dx < -50) {
+        if (dx < -50) { // swipe left
             clearInterval(bannerTimer);
             move(bannerIndex + 1);
             auto();
         }
+    });
+
+    // FIX resize perubahan ukuran layar
+    window.addEventListener("resize", () => {
+        const offset = -(getBannerWidth() * bannerIndex);
+        track.style.transform = `translateX(${offset}px)`;
     });
 }
 
@@ -217,7 +222,7 @@ document.querySelectorAll(".provider").forEach(btn=>{
 
 
 //------------------------------------------------------------
-// INIT ALL
+// INIT ALL (MULAI WEBSITE)
 //------------------------------------------------------------
 loadLinks();
 loadBanners();
