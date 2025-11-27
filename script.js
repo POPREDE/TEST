@@ -1,5 +1,5 @@
 //------------------------------------------------------------
-// DATA SOURCE (spreadsheet CSV)
+// CSV SOURCES
 //------------------------------------------------------------
 const GAME_CSV =
 "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv";
@@ -18,7 +18,7 @@ const RTP_JSON =
 
 
 //------------------------------------------------------------
-// CSV PARSER
+// CSV READER
 //------------------------------------------------------------
 async function fetchCSV(url){
     const res = await fetch(url);
@@ -26,7 +26,7 @@ async function fetchCSV(url){
     const rows = txt.trim().split("\n").map(r=>r.split(","));
     const head = rows.shift();
     return rows.map(r=>{
-        const o={};
+        let o={};
         r.forEach((v,i)=>o[head[i]] = v.trim());
         return o;
     });
@@ -34,25 +34,25 @@ async function fetchCSV(url){
 
 
 //------------------------------------------------------------
-// REGISTER & LOGIN & HEADER LOGO
+// LOAD REGISTER, LOGIN, HEADER LOGO
 //------------------------------------------------------------
 async function loadLinks(){
-    const list = await fetchCSV(LINK_CSV);
+    const data = await fetchCSV(LINK_CSV);
     const clean = x => x?.trim().toLowerCase();
 
     document.getElementById("btn-register").href =
-        list.find(x => clean(x.key)==="register")?.value || "#";
+        data.find(x => clean(x.key)==="register")?.value || "#";
 
     document.getElementById("btn-login").href =
-        list.find(x => clean(x.key)==="login")?.value || "#";
+        data.find(x => clean(x.key)==="login")?.value || "#";
 
     document.getElementById("logo-poprede").src =
-        list.find(x => clean(x.key)==="logo")?.value || "";
+        data.find(x => clean(x.key)==="header_logo")?.value || "";
 }
 
 
 //------------------------------------------------------------
-// BANNER SLIDER — SLIDE 1 BANNER PENUH
+// BANNER (FULL SLIDE RESTORED)
 //------------------------------------------------------------
 let bannerList=[];
 let bannerIndex=0;
@@ -73,36 +73,45 @@ async function loadBanners(){
         <div class="banner-item">
             <img src="${b.banner_url}">
         </div>`;
-        dots.innerHTML+=`<span class="dot ${i===0?"active":""}" data-id="${i}"></span>`;
+        dots.innerHTML+=`
+        <span class="dot ${i===0?"active":""}" data-id="${i}"></span>`;
     });
 
     caption.textContent = bannerList[0]?.banner_text || "";
 
-    initBannerEngine();
+    let imgs = track.querySelectorAll("img");
+    let loaded = 0;
+
+    imgs.forEach(img=>{
+        img.onload = ()=>{
+            loaded++;
+            if(loaded === imgs.length){
+                initBannerEngine();
+            }
+        };
+    });
 }
 
 function initBannerEngine(){
 
-    const track=document.getElementById("banner-track");
-    const items=document.querySelectorAll(".banner-item");
-    const dots=document.querySelectorAll(".banner-dots .dot");
-    const caption=document.getElementById("banner-caption");
+    const track = document.getElementById("banner-track");
+    const dots  = document.querySelectorAll(".dot");
+    const caption = document.getElementById("banner-caption");
+    const items = document.querySelectorAll(".banner-item");
 
     function move(n){
         bannerIndex = (n + bannerList.length) % bannerList.length;
-        const offset = items[bannerIndex].offsetLeft * -1;
-        track.style.transform = `translateX(${offset}px)`;
+        const width = items[bannerIndex].clientWidth;
+        track.style.transform = `translateX(-${bannerIndex * width}px)`;
 
         dots.forEach(d=>d.classList.remove("active"));
         dots[bannerIndex].classList.add("active");
 
-        caption.textContent = bannerList[bannerIndex]?.banner_text || "";
+        caption.textContent = bannerList[bannerIndex].banner_text;
     }
 
     dots.forEach(dot=>{
-        dot.onclick=()=>{
-            move(Number(dot.dataset.id));
-        };
+        dot.onclick = ()=> move(Number(dot.dataset.id));
     });
 
     setInterval(()=> move(bannerIndex+1), 3500);
@@ -110,22 +119,23 @@ function initBannerEngine(){
 
 
 //------------------------------------------------------------
-// LOGO STRIP
+// LOGO STRIP (PG & PRAG)
 //------------------------------------------------------------
 async function loadLogoStrip(){
     const list = await fetchCSV(LOGO_CSV);
     const strip = document.getElementById("logo-strip");
 
-    strip.innerHTML="";
+    strip.innerHTML = "";
 
     list.slice(0,2).forEach(l=>{
-        strip.innerHTML += `<img src="${l.logo_url}">`;
+        const url = l.logo_url || l.Logo || l.img || "";
+        strip.innerHTML += `<img src="${url}">`;
     });
 }
 
 
 //------------------------------------------------------------
-// RTP LOADER + GAME GRID
+// RTP COLOR
 //------------------------------------------------------------
 function getColor(r){
     if(r>=90) return "rtp-green";
@@ -133,21 +143,24 @@ function getColor(r){
     return "rtp-red";
 }
 
+
+//------------------------------------------------------------
+// LOAD RTP + GAME GRID
+//------------------------------------------------------------
 async function loadRTP(provider){
-    const res = await fetch(RTP_JSON+"?cache="+Date.now());
+    const res = await fetch(RTP_JSON+"?t="+Date.now());
     const json = await res.json();
     return json.provider[provider];
 }
 
 async function renderGames(provider="PG"){
 
-    const all  = await fetchCSV(GAME_CSV);
+    const all = await fetchCSV(GAME_CSV);
     const list = all.filter(x => x.provider === provider);
-
-    const rtp  = await loadRTP(provider);
+    const rtp = await loadRTP(provider);
 
     const grid = document.getElementById("game-grid");
-    grid.innerHTML="";
+    grid.innerHTML = "";
 
     list.forEach((g,i)=>{
         const val = rtp[i] || 50;
@@ -162,37 +175,35 @@ async function renderGames(provider="PG"){
             <div class="rtp-bar-container">
                 <div class="rtp-bar ${color}" data-value="${val}"></div>
             </div>
-
             <div class="rtp-text">${val}%</div>
 
         </div>`;
     });
 
-    // Animate bar
+    // Animate bars
     setTimeout(()=>{
         document.querySelectorAll(".rtp-bar").forEach(bar=>{
             bar.style.width = bar.dataset.value+"%";
         });
-    },50);
+    },80);
 }
 
 
 //------------------------------------------------------------
-// PROVIDER SWITCH
+// PROVIDER BUTTONS
 //------------------------------------------------------------
 document.querySelectorAll(".provider").forEach(btn=>{
     btn.onclick=()=>{
-        document.querySelectorAll(".provider")
-            .forEach(x=>x.classList.remove("active"));
-
+        document.querySelectorAll(".provider").forEach(x=>x.classList.remove("active"));
         btn.classList.add("active");
+
         renderGames(btn.dataset.provider);
     };
 });
 
 
 //------------------------------------------------------------
-// INIT WEBSITE
+// INIT ALL
 //------------------------------------------------------------
 loadLinks();
 loadBanners();
