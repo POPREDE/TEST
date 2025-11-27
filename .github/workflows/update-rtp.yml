@@ -31,9 +31,9 @@ jobs:
         // 1. LOAD CSV (FINAL DELIMITER FIX: TAB , ; )
         // ================================================
         const raw = fs.readFileSync("games.csv","utf8")
-          .trim()
-          .split("\n")
-          .map(r => r.split(/[\t,;]+/));  // <-- FIX PALING PENTING
+        .trim()
+        .split("\n")
+        .map(r => r.includes("\t") ? r.split(/\t+/) : r.split(/[,;]+/));   // <-- FIX PALING PENTING
 
         const head = raw.shift();
         const rows = raw.map(r=>{
