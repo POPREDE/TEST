@@ -2,10 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>POPREDE RTP LIVE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
     <!-- HEADER -->
@@ -13,23 +15,24 @@
         <a id="btn-register" class="header-btn">REGISTER</a>
 
         <div class="header-logo">
-            <img id="logo-poprede" src="" alt="POPREDE">
+            <img id="logo-poprede" src="" alt="logo">
         </div>
 
         <a id="btn-login" class="header-btn">LOGIN</a>
     </header>
 
-    <!-- HERO SECTION -->
-    <section class="hero">
 
-        <!-- LEFT TEXT -->
-        <div class="hero-left">
-            <h2>Selamat Datang di POPREDE</h2>
-            <p>Update RTP otomatis setiap 5 menit dengan sistem tren harian.</p>
+    <!-- HERO SECTION -->
+    <section class="hero-container">
+
+        <!-- Text Area -->
+        <div class="hero-text">
+            <h2 id="hero-title">Selamat Datang di POPREDE</h2>
+            <p id="hero-desc">Update RTP otomatis setiap 5 menit untuk semua game PG & Pragmatic.</p>
         </div>
 
-        <!-- RIGHT BANNER SLIDER -->
-        <div class="hero-right">
+        <!-- Banner Slider -->
+        <div class="hero-banner">
             <div class="banner-slider">
                 <div id="banner-track" class="banner-track"></div>
             </div>
@@ -39,11 +42,15 @@
 
     </section>
 
+
+
     <!-- PROVIDER TITLE -->
     <div class="provider-title">POPREDE RTP PRAGMATIC PLAY & PG SOFT</div>
 
-    <!-- LOGO STRIP -->
+    <!-- LOGO GRID -->
     <div id="logo-strip" class="logo-strip"></div>
+
+
 
     <!-- PROVIDER SWITCH -->
     <div class="provider-switch">
@@ -51,8 +58,12 @@
         <button class="provider" data-provider="PRAGMATIC">PRAGMATIC PLAY</button>
     </div>
 
+
+
     <!-- GAME GRID -->
     <div id="game-grid"></div>
+
+
 
     <script src="script.js"></script>
 </body>
