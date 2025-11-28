@@ -1,237 +1,189 @@
-//------------------------------------------------------------
-// CSV SOURCES
-//------------------------------------------------------------
-const GAME_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv";
-const LINK_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=1888859615&single=true&output=csv";
-const BANNER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=773368200&single=true&output=csv";
-const LOGO_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=1030942322&single=true&output=csv";
+name: POPREDE RTP Auto Generator FINAL RESET + 5 MIN
 
-// RAW JSON selalu pakai anti-cache
-const RTP_JSON   = "https://raw.githubusercontent.com/POPREDE/TEST/main/rtp.json";
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
 
+jobs:
+  build:
+    runs-on: ubuntu-latest
 
-//------------------------------------------------------------
-// CSV PARSER (TAB PRIORITY + fallback comma/semicolon)
-//------------------------------------------------------------
-async function fetchCSV(url) {
-    const res = await fetch(url + "&cache=" + Date.now(), { cache: "no-store" });
-    const text = await res.text();
+    steps:
+    - uses: actions/checkout@v3
 
-    const rows = text.trim().split("\n").map(r =>
-        r.includes("\t") ? r.split(/\t+/) : r.split(/[,;]+/)
-    );
+    - uses: actions/setup-node@v3
+      with:
+        node-version: "18"
 
-    const headers = rows.shift().map(h => h.trim());
+    # ============================================================
+    # DOWNLOAD CSV
+    # ============================================================
+    - name: Download Games CSV
+      run: |
+        curl -L -o games.csv \
+        "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv"
 
-    return rows.map(r => {
-        let o = {};
-        r.forEach((v, i) => o[headers[i]] = v?.trim());
-        return o;
-    });
-}
+    # ============================================================
+    # GENERATE RTP (RESET + SOFT UPDATE)
+    # ============================================================
+    - name: Generate RTP JSON
+      run: |
+        node << 'EOF'
+        const fs = require("fs");
 
+        // ----------------------------
+        // 1. LOAD CSV (TAB PRIORITY)
+        // ----------------------------
+        const csvText = fs.readFileSync("games.csv","utf8");
+        let rows = csvText.trim().split("\n");
 
-//------------------------------------------------------------
-// REGISTER / LOGIN / LOGO HEADER
-//------------------------------------------------------------
-async function loadLinks() {
-    const list = await fetchCSV(LINK_CSV);
-    const clean = x => (x || "").trim().toLowerCase();
+        rows = rows.map(r =>
+          r.includes("\t") ? r.split(/\t+/) : r.split(/[,;]+/)
+        );
 
-    document.getElementById("btn-register").href =
-        list.find(x => clean(x.key) === "register")?.value || "#";
+        const head = rows.shift().map(h => h.trim());
+        rows = rows.map(r=>{
+          let o={};
+          r.forEach((v,i)=>o[head[i]] = v.trim());
+          return o;
+        });
 
-    document.getElementById("btn-login").href =
-        list.find(x => clean(x.key) === "login")?.value || "#";
+        // ----------------------------
+        // 2. PROVIDER DETECT
+        // ----------------------------
+        function detectProvider(p){
+          p = (p || "").trim().toLowerCase();
+          if(p.startsWith("pg")) return "PG";
+          if(p.startsWith("prag")) return "PRAGMATIC";
+          return "OTHER";
+        }
 
-    document.getElementById("logo-poprede").src =
-        list.find(x => clean(x.key) === "logo")?.value || "";
-}
+        const PG_list   = rows.filter(x => detectProvider(x.provider)==="PG");
+        const PRAG_list = rows.filter(x => detectProvider(x.provider)==="PRAGMATIC");
 
+        const PG_count   = PG_list.length;
+        const PRAG_count = PRAG_list.length;
 
-//------------------------------------------------------------
-// BANNER SLIDER — SLIDE 1 BANNER PENUH
-//------------------------------------------------------------
-let bannerList = [];
-let bannerIndex = 0;
-let bannerTimer = null;
-let startX = 0;
+        // ----------------------------
+        // 3. TIME CONTROL (BRASIL)
+        // ----------------------------
+        const now = new Date();
+        const hourBR = (now.getUTCHours() - 3 + 24) % 24;
 
-async function loadBanners() {
-    bannerList = await fetchCSV(BANNER_CSV);
+        // ----------------------------
+        // 4. TREND ENGINE (DAILY)
+        // ----------------------------
+        const today = new Date().toISOString().split("T")[0];
+        const trendDir  = `rtp-history/${today}`;
+        const trendFile = `${trendDir}/trend.json`;
 
-    const track = document.getElementById("banner-track");
-    const dots = document.getElementById("banner-dots");
-    const caption = document.getElementById("banner-caption");
+        fs.mkdirSync(trendDir,{recursive:true});
 
-    track.innerHTML = "";
-    dots.innerHTML = "";
+        let trend = "normal";
 
-    bannerList.forEach((b, i) => {
-        track.innerHTML += `
-            <div class="banner-item">
-                <img src="${b.banner_url}">
-            </div>
-        `;
-        dots.innerHTML += `<span class="dot ${i === 0 ? 'active' : ''}" data-id="${i}"></span>`;
-    });
+        if(!fs.existsSync(trendFile)){
+          const pick = ["up","down","normal"];
+          trend = pick[Math.floor(Math.random()*pick.length)];
+          fs.writeFileSync(trendFile, JSON.stringify({trend}));
+        } else {
+          trend = JSON.parse(fs.readFileSync(trendFile)).trend;
+        }
 
-    caption.textContent = bannerList[0]?.banner_text || "";
+        // clean random 1 decimal
+        function rand(min,max){
+          return Number((Math.random()*(max-min)+min).toFixed(1));
+        }
 
-    initBannerEngine();
-}
+        // ----------------------------
+        // 5. FULL DISTRIBUTION RESET
+        // ----------------------------
+        function generateRTP(count){
+          let arr = [];
 
-function initBannerEngine() {
-    const track = document.getElementById("banner-track");
-    const items = document.querySelectorAll(".banner-item");
-    const dots = document.querySelectorAll(".banner-dots .dot");
-    const caption = document.getElementById("banner-caption");
+          const high = Math.min(5, count);
+          const low  = Math.min(15, count-high);
 
-    function move(n) {
-        bannerIndex = (n + bannerList.length) % bannerList.length;
+          // High (90-99)
+          for(let i=0;i<high;i++)
+            arr.push(trend==="up" ? rand(93,99.9) : rand(90,96));
 
-        const offset = items[bannerIndex].offsetLeft * -1;
-        track.style.transform = `translateX(${offset}px)`;
+          // Low (50-70)
+          for(let i=0;i<low;i++)
+            arr.push(trend==="down" ? rand(50,65) : rand(55,70));
 
-        dots.forEach(d => d.classList.remove("active"));
-        dots[bannerIndex].classList.add("active");
+          // Mid (70-89)
+          while(arr.length < count){
+            if(trend==="up") arr.push(rand(78,93));
+            else if(trend==="down") arr.push(rand(63,82));
+            else arr.push(rand(70,90));
+          }
 
-        caption.textContent = bannerList[bannerIndex]?.banner_text || "";
-    }
+          return arr.sort(()=>Math.random()-0.5)
+                    .map(n => Number(n.toFixed(1)));
+        }
 
-    dots.forEach(dot => {
-        dot.onclick = () => {
-            clearInterval(bannerTimer);
-            move(Number(dot.dataset.id));
-            autoSlide();
+        // ----------------------------
+        // 6. BUILD RTP
+        // ----------------------------
+        let rtpPG, rtpPRAG;
+
+        if(hourBR === 0){
+          // RESET SETIAP 24 JAM (00 Brasil)
+          rtpPG   = generateRTP(PG_count);
+          rtpPRAG = generateRTP(PRAG_count);
+
+        } else {
+          // SOFT UPDATE 5 MENIT
+          let old = {provider:{PG:[],PRAGMATIC:[]}};
+          try { old = JSON.parse(fs.readFileSync("rtp.json")); } catch {}
+
+          rtpPG = PG_list.map((_,i)=>{
+            let base = old.provider.PG[i] ?? rand(70,90);
+            let n = Number((base + rand(-2,2)).toFixed(1));
+            return Math.max(50, Math.min(99.9, n));
+          });
+
+          rtpPRAG = PRAG_list.map((_,i)=>{
+            let base = old.provider.PRAGMATIC[i] ?? rand(70,90);
+            let n = Number((base + rand(-2,2)).toFixed(1));
+            return Math.max(50, Math.min(99.9, n));
+          });
+        }
+
+        // ----------------------------
+        // 7. SAVE rtp.json
+        // ----------------------------
+        const output = {
+          provider:{
+            PG: rtpPG,
+            PRAGMATIC: rtpPRAG
+          }
         };
-    });
 
-    function autoSlide() {
-        bannerTimer = setInterval(() => move(bannerIndex + 1), 3500);
-    }
+        fs.writeFileSync("rtp.json", JSON.stringify(output,null,2));
 
-    autoSlide();
+        // ----------------------------
+        // 8. SAVE HISTORY
+        // ----------------------------
+        const hh = String(now.getHours()).padStart(2,"0");
+        const mm = String(now.getMinutes()).padStart(2,"0");
 
-    track.addEventListener("touchstart", e => startX = e.touches[0].clientX);
-    track.addEventListener("touchend", e => {
-        const dx = e.changedTouches[0].clientX - startX;
+        fs.writeFileSync(
+          `${trendDir}/${hh}-${mm}.json`,
+          JSON.stringify(output,null,2)
+        );
 
-        if (dx > 50) {
-            clearInterval(bannerTimer);
-            move(bannerIndex - 1);
-            autoSlide();
-        }
-        if (dx < -50) {
-            clearInterval(bannerTimer);
-            move(bannerIndex + 1);
-            autoSlide();
-        }
-    });
+        EOF
 
-    window.addEventListener("resize", () => {
-        const offset = items[bannerIndex].offsetLeft * -1;
-        track.style.transform = `translateX(${offset}px)`;
-    });
-}
+    # ============================================================
+    # PUSH UPDATE
+    # ============================================================
+    - name: Push Updates
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        git add rtp.json rtp-history/
+        git commit -m "Auto RTP Update (RESET + 5 MIN + 1 DEC)" || echo "No changes"
+        git push
 
-
-//------------------------------------------------------------
-// LOGO GRID (2 provider only — PG + PRAGMATIC)
-//------------------------------------------------------------
-async function loadLogoStrip() {
-    const list = await fetchCSV(LOGO_CSV);
-    const grid = document.getElementById("logo-strip");
-
-    grid.innerHTML = "";
-
-    const logos = list
-        .filter(l =>
-            l.provider?.toLowerCase().includes("pg") ||
-            l.provider?.toLowerCase().includes("prag")
-        )
-        .slice(0, 2);
-
-    logos.forEach(logo => {
-        grid.innerHTML += `<img src="${logo.logo_url}">`;
-    });
-}
-
-
-//------------------------------------------------------------
-// RTP JSON LOADER — ANTI CACHE 100%
-//------------------------------------------------------------
-async function loadRTP(provider) {
-    const res = await fetch(
-        RTP_JSON + "?v=" + new Date().getTime(),
-        { cache: "no-store" }
-    );
-
-    const json = await res.json();
-    return json.provider[provider] || [];
-}
-
-
-//------------------------------------------------------------
-// COLOR CLASS UNTUK RTP
-//------------------------------------------------------------
-function getColorClass(rtp) {
-    if (rtp >= 90) return "rtp-green";
-    if (rtp >= 70) return "rtp-yellow";
-    return "rtp-red";
-}
-
-
-//------------------------------------------------------------
-// RENDER GAME GRID
-//------------------------------------------------------------
-async function renderGames(provider = "PG") {
-    const allGames = await fetchCSV(GAME_CSV);
-    const games = allGames.filter(g =>
-        (g.provider || "").trim().toLowerCase().startsWith(provider.toLowerCase())
-    );
-
-    const rtp = await loadRTP(provider);
-    const grid = document.getElementById("game-grid");
-
-    grid.innerHTML = "";
-
-    games.forEach((g, i) => {
-        const r = rtp[i] ?? 50;
-        const color = getColorClass(r);
-
-        grid.innerHTML += `
-        <div class="card">
-            <img src="${g.image_url}">
-            <div class="game-name">${g.game_name}</div>
-
-            <div class="rtp-bar-container">
-                <div class="rtp-bar ${color}" style="width:${r}%"></div>
-            </div>
-
-            <div class="rtp-text">${r}%</div>
-        </div>
-        `;
-    });
-}
-
-
-//------------------------------------------------------------
-// PROVIDER SWITCH
-//------------------------------------------------------------
-document.querySelectorAll(".provider").forEach(btn => {
-    btn.onclick = () => {
-        document.querySelectorAll(".provider").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        renderGames(btn.dataset.provider);
-    };
-});
-
-
-//------------------------------------------------------------
-// INIT
-//------------------------------------------------------------
-loadLinks();
-loadBanners();
-loadLogoStrip();
-renderGames("PG");
