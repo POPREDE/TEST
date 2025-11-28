@@ -101,8 +101,8 @@ jobs:
         function generateRTP(count){
           let arr = [];
 
-          const high = Math.min(5, count);
-          const low  = Math.min(15, count-high);
+          const high = Math.min(10, count);
+          const low  = Math.min(25, count-high);
 
           // High (90-99)
           for(let i=0;i<high;i++)
