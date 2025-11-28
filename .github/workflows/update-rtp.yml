@@ -1,4 +1,4 @@
-name: POPREDE RTP Auto Generator FINAL (1 DECIMAL)
+name: POPREDE RTP Auto Generator FINAL RESET + 5 MIN
 
 on:
   schedule:
@@ -10,67 +10,48 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-
-    # Checkout Repo
     - uses: actions/checkout@v3
 
-    # Node
     - uses: actions/setup-node@v3
       with:
         node-version: "18"
 
     # ============================================================
-    # DOWNLOAD CSV GAME
+    # DOWNLOAD CSV
     # ============================================================
     - name: Download Games CSV
       run: |
-        echo "Downloading game CSV..."
         curl -L -o games.csv \
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv"
 
-        echo "=== RAW CSV (first 200 chars) ==="
-        head -c 200 games.csv
-        echo ""
-        echo "=== FIRST 10 ROWS ==="
-        head -n 10 games.csv
-
-
     # ============================================================
-    # GENERATE RTP JSON (FULL 1 DECIMAL + DEBUG)
+    # GENERATE RTP (RESET + SOFT UPDATE)
     # ============================================================
-    - name: Generate RTP JSON (FINAL 1 DECIMAL)
+    - name: Generate RTP JSON
       run: |
         node << 'EOF'
         const fs = require("fs");
 
-        console.log("========================================");
-        console.log(" POPREDE FINAL RTP ENGINE (1 DECIMAL)");
-        console.log("========================================");
-
-        // =====================================
-        // LOAD CSV (TAB PRIORITY)
-        // =====================================
+        // ----------------------------
+        // 1. LOAD CSV (TAB PRIORITY)
+        // ----------------------------
         const csvText = fs.readFileSync("games.csv","utf8");
+        let rows = csvText.trim().split("\n");
 
-        let raw = csvText.trim().split("\n");
-
-        raw = raw.map(r =>
+        rows = rows.map(r =>
           r.includes("\t") ? r.split(/\t+/) : r.split(/[,;]+/)
         );
 
-        const head = raw.shift().map(h => h.trim());
-        const rows = raw.map(r=>{
+        const head = rows.shift().map(h => h.trim());
+        rows = rows.map(r=>{
           let o={};
           r.forEach((v,i)=>o[head[i]] = v.trim());
           return o;
         });
 
-        console.log("HEADERS:", head);
-        console.log("TOTAL ROWS:", rows.length);
-
-        // =====================================
-        // PROVIDER DETECT
-        // =====================================
+        // ----------------------------
+        // 2. PROVIDER DETECT
+        // ----------------------------
         function detectProvider(p){
           p = (p || "").trim().toLowerCase();
           if(p.startsWith("pg")) return "PG";
@@ -78,21 +59,28 @@ jobs:
           return "OTHER";
         }
 
-        const PG_list = rows.filter(x => detectProvider(x.provider)==="PG");
+        const PG_list   = rows.filter(x => detectProvider(x.provider)==="PG");
         const PRAG_list = rows.filter(x => detectProvider(x.provider)==="PRAGMATIC");
 
-        console.log("PG COUNT:", PG_list.length);
-        console.log("PRAG COUNT:", PRAG_list.length);
+        const PG_count   = PG_list.length;
+        const PRAG_count = PRAG_list.length;
 
-        // =====================================
-        // TREND ENGINE
-        // =====================================
+        // ----------------------------
+        // 3. TIME CONTROL (BRASIL)
+        // ----------------------------
+        const now = new Date();
+        const hourBR = (now.getUTCHours() - 3 + 24) % 24;
+
+        // ----------------------------
+        // 4. TREND ENGINE (DAILY)
+        // ----------------------------
         const today = new Date().toISOString().split("T")[0];
-        const trendDir = `rtp-history/${today}`;
+        const trendDir  = `rtp-history/${today}`;
         const trendFile = `${trendDir}/trend.json`;
 
-        let trend = "normal";
         fs.mkdirSync(trendDir,{recursive:true});
+
+        let trend = "normal";
 
         if(!fs.existsSync(trendFile)){
           const pick = ["up","down","normal"];
@@ -102,27 +90,29 @@ jobs:
           trend = JSON.parse(fs.readFileSync(trendFile)).trend;
         }
 
-        console.log("TODAY TREND:", trend);
-
-        // RANDOM 1 DECIMAL CLEAN
+        // clean random 1 decimal
         function rand(min,max){
-          return Number((Math.random()*(min-max)+max).toFixed(1));
+          return Number((Math.random()*(max-min)+min).toFixed(1));
         }
 
-        // =====================================
-        // DISTRIBUSI RTP NATURAL (1 DECIMAL)
-        // =====================================
+        // ----------------------------
+        // 5. FULL DISTRIBUTION RESET
+        // ----------------------------
         function generateRTP(count){
           let arr = [];
-          const high = Math.min(5,count);
-          const low  = Math.min(15,count-high);
 
+          const high = Math.min(5, count);
+          const low  = Math.min(15, count-high);
+
+          // High (90-99)
           for(let i=0;i<high;i++)
             arr.push(trend==="up" ? rand(93,99.9) : rand(90,96));
 
+          // Low (50-70)
           for(let i=0;i<low;i++)
             arr.push(trend==="down" ? rand(50,65) : rand(55,70));
 
+          // Mid (70-89)
           while(arr.length < count){
             if(trend==="up") arr.push(rand(78,93));
             else if(trend==="down") arr.push(rand(63,82));
@@ -130,57 +120,52 @@ jobs:
           }
 
           return arr.sort(()=>Math.random()-0.5)
-                    .map(n => Number(n.toFixed(1))); // FIX 1 DECIMAL
+                    .map(n => Number(n.toFixed(1)));
         }
 
-        // =====================================
-        // DAILY RESET VS SOFT UPDATE
-        // =====================================
-        const now = new Date();
-        const hourBR = (now.getUTCHours() - 3 + 24) % 24;
-        console.log("BRAZIL HOUR:", hourBR);
-
-        let PG_rtp, PRAG_rtp;
+        // ----------------------------
+        // 6. BUILD RTP
+        // ----------------------------
+        let rtpPG, rtpPRAG;
 
         if(hourBR === 0){
-          console.log("DAILY RESET — FULL REGENERATE");
-          PG_rtp   = generateRTP(PG_list.length);
-          PRAG_rtp = generateRTP(PRAG_list.length);
-        } else {
-          console.log("SOFT UPDATE (5 min)");
+          // RESET SETIAP 24 JAM (00 Brasil)
+          rtpPG   = generateRTP(PG_count);
+          rtpPRAG = generateRTP(PRAG_count);
 
+        } else {
+          // SOFT UPDATE 5 MENIT
           let old = {provider:{PG:[],PRAGMATIC:[]}};
           try { old = JSON.parse(fs.readFileSync("rtp.json")); } catch {}
 
-          PG_rtp = PG_list.map((_,i)=>{
+          rtpPG = PG_list.map((_,i)=>{
             let base = old.provider.PG[i] ?? rand(70,90);
-            let n = base + rand(-2,2);
-            return Number(Math.min(99.9,Math.max(50,n)).toFixed(1));
+            let n = Number((base + rand(-2,2)).toFixed(1));
+            return Math.max(50, Math.min(99.9, n));
           });
 
-          PRAG_rtp = PRAG_list.map((_,i)=>{
+          rtpPRAG = PRAG_list.map((_,i)=>{
             let base = old.provider.PRAGMATIC[i] ?? rand(70,90);
-            let n = base + rand(-2,2);
-            return Number(Math.min(99.9,Math.max(50,n)).toFixed(1));
+            let n = Number((base + rand(-2,2)).toFixed(1));
+            return Math.max(50, Math.min(99.9, n));
           });
         }
 
-        // =====================================
-        // OUTPUT FINAL JSON
-        // =====================================
+        // ----------------------------
+        // 7. SAVE rtp.json
+        // ----------------------------
         const output = {
           provider:{
-            PG: PG_rtp,
-            PRAGMATIC: PRAG_rtp
+            PG: rtpPG,
+            PRAGMATIC: rtpPRAG
           }
         };
 
         fs.writeFileSync("rtp.json", JSON.stringify(output,null,2));
-        console.log("rtp.json UPDATED.");
 
-        // =====================================
-        // SAVE HISTORY
-        // =====================================
+        // ----------------------------
+        // 8. SAVE HISTORY
+        // ----------------------------
         const hh = String(now.getHours()).padStart(2,"0");
         const mm = String(now.getMinutes()).padStart(2,"0");
 
@@ -189,10 +174,7 @@ jobs:
           JSON.stringify(output,null,2)
         );
 
-        console.log(`Saved history: ${trendDir}/${hh}-${mm}.json`);
-        console.log("DONE.");
         EOF
-
 
     # ============================================================
     # PUSH UPDATE
@@ -201,7 +183,7 @@ jobs:
       run: |
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
-
         git add rtp.json rtp-history/
-        git commit -m "Auto RTP (FINAL 1 DECIMAL)" || echo "No changes"
+        git commit -m "Auto RTP Update (RESET + 5 MIN + 1 DEC)" || echo "No changes"
         git push
+
