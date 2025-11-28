@@ -6,32 +6,37 @@ const LINK_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmh
 const BANNER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=773368200&single=true&output=csv";
 const LOGO_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=1030942322&single=true&output=csv";
 
-const RTP_JSON = "https://raw.githubusercontent.com/POPREDE/TEST/main/rtp.json";
+// RAW JSON selalu pakai anti-cache
+const RTP_JSON   = "https://raw.githubusercontent.com/POPREDE/TEST/main/rtp.json";
 
 
 //------------------------------------------------------------
-// CSV PARSER
+// CSV PARSER (TAB PRIORITY + fallback comma/semicolon)
 //------------------------------------------------------------
 async function fetchCSV(url) {
-    const res = await fetch(url);
+    const res = await fetch(url + "&cache=" + Date.now(), { cache: "no-store" });
     const text = await res.text();
-    const rows = text.split("\n").map(r => r.split(","));
-    const head = rows.shift().map(h => h.trim());
 
-    return rows.map(r=>{
-        let o={};
-        r.forEach((v,i)=>o[head[i]] = v.trim());
+    const rows = text.trim().split("\n").map(r =>
+        r.includes("\t") ? r.split(/\t+/) : r.split(/[,;]+/)
+    );
+
+    const headers = rows.shift().map(h => h.trim());
+
+    return rows.map(r => {
+        let o = {};
+        r.forEach((v, i) => o[headers[i]] = v?.trim());
         return o;
     });
 }
 
 
 //------------------------------------------------------------
-// REGISTER / LOGIN / HEADER LOGO
+// REGISTER / LOGIN / LOGO HEADER
 //------------------------------------------------------------
 async function loadLinks() {
     const list = await fetchCSV(LINK_CSV);
-    const clean = x => x?.trim().toLowerCase();
+    const clean = x => (x || "").trim().toLowerCase();
 
     document.getElementById("btn-register").href =
         list.find(x => clean(x.key) === "register")?.value || "#";
@@ -45,7 +50,7 @@ async function loadLinks() {
 
 
 //------------------------------------------------------------
-// BANNER SLIDER — FINAL FIX 2 (REAL OFFSET, 100% AKURAT)
+// BANNER SLIDER — SLIDE 1 BANNER PENUH
 //------------------------------------------------------------
 let bannerList = [];
 let bannerIndex = 0;
@@ -56,7 +61,7 @@ async function loadBanners() {
     bannerList = await fetchCSV(BANNER_CSV);
 
     const track = document.getElementById("banner-track");
-    const dots  = document.getElementById("banner-dots");
+    const dots = document.getElementById("banner-dots");
     const caption = document.getElementById("banner-caption");
 
     track.innerHTML = "";
@@ -68,24 +73,23 @@ async function loadBanners() {
                 <img src="${b.banner_url}">
             </div>
         `;
-        dots.innerHTML += `<span class="dot ${i===0?'active':''}" data-id="${i}"></span>`;
+        dots.innerHTML += `<span class="dot ${i === 0 ? 'active' : ''}" data-id="${i}"></span>`;
     });
 
     caption.textContent = bannerList[0]?.banner_text || "";
+
     initBannerEngine();
 }
 
 function initBannerEngine() {
-
     const track = document.getElementById("banner-track");
     const items = document.querySelectorAll(".banner-item");
-    const dots  = document.querySelectorAll(".banner-dots .dot");
+    const dots = document.querySelectorAll(".banner-dots .dot");
     const caption = document.getElementById("banner-caption");
 
     function move(n) {
         bannerIndex = (n + bannerList.length) % bannerList.length;
 
-        // ⭐ REAL SLIDE: geser 1 banner penuh berdasarkan posisi asli
         const offset = items[bannerIndex].offsetLeft * -1;
         track.style.transform = `translateX(${offset}px)`;
 
@@ -95,22 +99,20 @@ function initBannerEngine() {
         caption.textContent = bannerList[bannerIndex]?.banner_text || "";
     }
 
-    // DOT CLICK
-    dots.forEach(dot=>{
+    dots.forEach(dot => {
         dot.onclick = () => {
             clearInterval(bannerTimer);
             move(Number(dot.dataset.id));
-            auto();
+            autoSlide();
         };
     });
 
-    // AUTO SLIDE (GESER 1 BANNER)
-    function auto() {
+    function autoSlide() {
         bannerTimer = setInterval(() => move(bannerIndex + 1), 3500);
     }
-    auto();
 
-    // SWIPE TOUCH
+    autoSlide();
+
     track.addEventListener("touchstart", e => startX = e.touches[0].clientX);
     track.addEventListener("touchend", e => {
         const dx = e.changedTouches[0].clientX - startX;
@@ -118,17 +120,15 @@ function initBannerEngine() {
         if (dx > 50) {
             clearInterval(bannerTimer);
             move(bannerIndex - 1);
-            auto();
+            autoSlide();
         }
-
         if (dx < -50) {
             clearInterval(bannerTimer);
             move(bannerIndex + 1);
-            auto();
+            autoSlide();
         }
     });
 
-    // FIX RESIZE (agar posisi tidak berubah saat layar berubah)
     window.addEventListener("resize", () => {
         const offset = items[bannerIndex].offsetLeft * -1;
         track.style.transform = `translateX(${offset}px)`;
@@ -137,7 +137,7 @@ function initBannerEngine() {
 
 
 //------------------------------------------------------------
-// LOGO GRID
+// LOGO GRID (2 provider only — PG + PRAGMATIC)
 //------------------------------------------------------------
 async function loadLogoStrip() {
     const list = await fetchCSV(LOGO_CSV);
@@ -147,8 +147,8 @@ async function loadLogoStrip() {
 
     const logos = list
         .filter(l =>
-            l.provider.toLowerCase().includes("PG") ||
-            l.provider.toLowerCase().includes("PRAGMATIC")
+            l.provider?.toLowerCase().includes("pg") ||
+            l.provider?.toLowerCase().includes("prag")
         )
         .slice(0, 2);
 
@@ -159,7 +159,21 @@ async function loadLogoStrip() {
 
 
 //------------------------------------------------------------
-// RTP + GAME GRID
+// RTP JSON LOADER — ANTI CACHE 100%
+//------------------------------------------------------------
+async function loadRTP(provider) {
+    const res = await fetch(
+        RTP_JSON + "?v=" + new Date().getTime(),
+        { cache: "no-store" }
+    );
+
+    const json = await res.json();
+    return json.provider[provider] || [];
+}
+
+
+//------------------------------------------------------------
+// COLOR CLASS UNTUK RTP
 //------------------------------------------------------------
 function getColorClass(rtp) {
     if (rtp >= 90) return "rtp-green";
@@ -167,24 +181,23 @@ function getColorClass(rtp) {
     return "rtp-red";
 }
 
-async function loadRTP(provider) {
-    const res = await fetch(RTP_JSON + "?cache=" + Date.now());
-    const json = await res.json();
-    return json.provider[provider];
-}
 
-async function renderGames(provider="PG") {
-
+//------------------------------------------------------------
+// RENDER GAME GRID
+//------------------------------------------------------------
+async function renderGames(provider = "PG") {
     const allGames = await fetchCSV(GAME_CSV);
-    const games = allGames.filter(g => g.provider === provider);
+    const games = allGames.filter(g =>
+        (g.provider || "").trim().toLowerCase().startsWith(provider.toLowerCase())
+    );
 
     const rtp = await loadRTP(provider);
-
     const grid = document.getElementById("game-grid");
+
     grid.innerHTML = "";
 
     games.forEach((g, i) => {
-        const r = rtp[i] || 50;
+        const r = rtp[i] ?? 50;
         const color = getColorClass(r);
 
         grid.innerHTML += `
@@ -206,9 +219,9 @@ async function renderGames(provider="PG") {
 //------------------------------------------------------------
 // PROVIDER SWITCH
 //------------------------------------------------------------
-document.querySelectorAll(".provider").forEach(btn=>{
+document.querySelectorAll(".provider").forEach(btn => {
     btn.onclick = () => {
-        document.querySelectorAll(".provider").forEach(b=>b.classList.remove("active"));
+        document.querySelectorAll(".provider").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
         renderGames(btn.dataset.provider);
     };
@@ -216,10 +229,9 @@ document.querySelectorAll(".provider").forEach(btn=>{
 
 
 //------------------------------------------------------------
-// INIT ALL
+// INIT
 //------------------------------------------------------------
 loadLinks();
 loadBanners();
 loadLogoStrip();
 renderGames("PG");
-
