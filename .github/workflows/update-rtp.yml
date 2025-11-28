@@ -1,4 +1,4 @@
-name: POPREDE RTP Auto Generator FINAL FIX
+name: POPREDE RTP Auto Generator (FULL DEBUG)
 
 on:
   schedule:
@@ -11,96 +11,124 @@ jobs:
 
     steps:
 
+    # Checkout repo
     - uses: actions/checkout@v3
 
+    # Node.js
     - uses: actions/setup-node@v3
       with:
         node-version: "18"
 
+    # ============================================================
+    # DOWNLOAD CSV DARI GOOGLE SHEETS (LOG OUTPUT)
+    # ============================================================
     - name: Download Games CSV
       run: |
+        echo "Downloading CSV..."
         curl -L -o games.csv \
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv"
 
-    - name: Generate RTP JSON + Auto History
+        echo "=== CSV RAW (first 200 chars) ==="
+        head -c 200 games.csv
+        echo ""
+        echo "=== CSV FIRST 10 ROWS ==="
+        head -n 10 games.csv
+
+    # ============================================================
+    # GENERATE RTP + FULL DEBUG LOGGING
+    # ============================================================
+    - name: Generate RTP JSON + FULL DEBUG
       run: |
         node << 'EOF'
         const fs = require("fs");
 
-        // ================================================
-        // 1. LOAD CSV (FINAL DELIMITER FIX: TAB , ; )
-        // ================================================
-        const raw = fs.readFileSync("games.csv","utf8")
-        .trim()
-        .split("\n")
-        .map(r => r.includes("\t") ? r.split(/\t+/) : r.split(/[,;]+/));   // <-- FIX PALING PENTING
+        console.log("=====================================");
+        console.log("   POPREDE — RTP GENERATOR DEBUG");
+        console.log("=====================================");
 
-        const head = raw.shift();
+        // ---------------------------
+        // LOAD CSV
+        // ---------------------------
+        const csvRaw = fs.readFileSync("games.csv","utf8");
+        console.log("\n=== RAW CSV FIRST 300 CHARS ===");
+        console.log(csvRaw.slice(0,300));
+
+        let raw = csvRaw.trim().split("\n");
+
+        console.log("\n=== FIRST 5 LINES BEFORE SPLIT ===");
+        console.log(raw.slice(0,5));
+
+        raw = raw.map(r =>
+          r.includes("\t") ? r.split(/\t+/) : r.split(/[,;]+/)
+        );
+
+        console.log("\n=== FIRST 5 LINES AFTER SPLIT ===");
+        console.log(raw.slice(0,5));
+
+        const head = raw.shift().map(h => h.trim());
+        console.log("\n=== HEADERS DETECTED ===");
+        console.log(head);
+
         const rows = raw.map(r=>{
           let o = {};
-          r.forEach((v,i)=>o[head[i]] = v.trim());
+          r.forEach((v,i)=> o[head[i]] = v.trim());
           return o;
         });
 
-        // ================================================
-        // 2. AUTO PROVIDER DETECT (PG / PRAGMATIC)
-        // ================================================
+        console.log("\n=== FIRST 5 PARSED OBJECTS ===");
+        console.log(rows.slice(0,5));
+
+        // ---------------------------
+        // PROVIDER DETECTION
+        // ---------------------------
         function detectProvider(p){
-          p = (p || "").toLowerCase();
-          if(p.includes("pg")) return "PG";
-          if(p.includes("prag")) return "PRAGMATIC";
+          p = (p || "").trim().toLowerCase();
+          if(p.startsWith("pg")) return "PG";
+          if(p.startsWith("prag")) return "PRAGMATIC";
           return "OTHER";
         }
+
+        console.log("\n=== PROVIDER DETECT (FIRST 10) ===");
+        console.log(rows.slice(0,10).map(x => x.provider+" → "+detectProvider(x.provider)));
 
         const PG_list   = rows.filter(x => detectProvider(x.provider)==="PG");
         const PRAG_list = rows.filter(x => detectProvider(x.provider)==="PRAGMATIC");
 
-        const PG_count  = PG_list.length;
-        const PRAG_count= PRAG_list.length;
+        console.log("\nPG_count:", PG_list.length);
+        console.log("PRAG_count:", PRAG_list.length);
 
-        console.log("PG COUNT:", PG_count);
-        console.log("PRAG COUNT:", PRAG_count);
-
-        // ================================================
-        // 3. TREND ENGINE
-        // ================================================
+        // ---------------------------
+        // TREND ENGINE
+        // ---------------------------
         const today = new Date().toISOString().split("T")[0];
         const trendFile = `rtp-history/${today}/trend.json`;
 
         let trend = "normal";
-
         if(!fs.existsSync(trendFile)){
           const pick = ["up","down","normal"];
           trend = pick[Math.floor(Math.random()*pick.length)];
-
           fs.mkdirSync(`rtp-history/${today}`,{recursive:true});
           fs.writeFileSync(trendFile, JSON.stringify({trend}));
         } else {
           trend = JSON.parse(fs.readFileSync(trendFile)).trend;
         }
 
+        console.log("\nTREND TODAY:", trend);
+
         function rand(min,max){
           return +(Math.random()*(max-min)+min).toFixed(1);
         }
 
-        // ================================================
-        // 4. DISTRIBUSI RTP NATURAL (LEVEL 2 ADVANCED)
-        // ================================================
         function generateRTP(count){
           let arr = [];
+          const high = Math.min(5,count);
+          const low  = Math.min(15,count-high);
 
-          const high = Math.min(5,count);     // 90–99
-          const low  = Math.min(15,count-high); // 50–70
+          for(let i=0;i<high;i++)
+            arr.push(trend==="up" ? rand(93,99.9) : rand(90,96));
 
-          for(let i=0;i<high;i++){
-            if(trend==="up") arr.push(rand(93,99.9));
-            else arr.push(rand(90,96));
-          }
-
-          for(let i=0;i<low;i++){
-            if(trend==="down") arr.push(rand(50,65));
-            else arr.push(rand(55,70));
-          }
+          for(let i=0;i<low;i++)
+            arr.push(trend==="down" ? rand(50,65) : rand(55,70));
 
           while(arr.length < count){
             if(trend==="up") arr.push(rand(78,93));
@@ -111,43 +139,49 @@ jobs:
           return arr.sort(()=>Math.random()-0.5);
         }
 
-        // ================================================
-        // 5. DAILY RESET (00:00 Brasil)
-        // ================================================
+        // ---------------------------
+        // DAILY RESET VS SOFT UPDATE
+        // ---------------------------
         const now = new Date();
         const hourBR = (now.getUTCHours() - 3 + 24) % 24;
 
         let rtpPG, rtpPRAG;
 
+        console.log("\nHour (Brazil):", hourBR);
+
         if(hourBR === 0){
-          rtpPG   = generateRTP(PG_count);
-          rtpPRAG = generateRTP(PRAG_count);
+          console.log("→ DAILY RESET (00:00)");
+          rtpPG   = generateRTP(PG_list.length);
+          rtpPRAG = generateRTP(PRAG_list.length);
         } else {
-          let old;
-          try {
-            old = JSON.parse(fs.readFileSync("rtp.json"));
-          } catch {
-            old = {provider:{PG:[],PRAGMATIC:[]}};
-          }
+          console.log("→ SOFT UPDATE");
+          let old = {provider:{PG:[],PRAGMATIC:[]}};
+          try { old = JSON.parse(fs.readFileSync("rtp.json")); } catch {}
 
           rtpPG = PG_list.map((_,i)=>{
-            let oldVal = old.provider.PG[i] ?? rand(70,90);
-            let n = oldVal + rand(-2,2);
+            let base = old.provider.PG[i] ?? rand(70,90);
+            let n = base + rand(-2,2);
             return Math.max(50,Math.min(99.9,n));
           });
 
           rtpPRAG = PRAG_list.map((_,i)=>{
-            let oldVal = old.provider.PRAGMATIC[i] ?? rand(70,90);
-            let n = oldVal + rand(-2,2);
+            let base = old.provider.PRAGMATIC[i] ?? rand(70,90);
+            let n = base + rand(-2,2);
             return Math.max(50,Math.min(99.9,n));
           });
         }
 
-        // ================================================
-        // 6. WRITE rtp.json (OVERRIDE)
-        // ================================================
+        console.log("\n=== SAMPLE RTP PG (first 10) ===");
+        console.log(rtpPG.slice(0,10));
+
+        console.log("\n=== SAMPLE RTP PRAG (first 10) ===");
+        console.log(rtpPRAG.slice(0,10));
+
+        // ---------------------------
+        // WRITE rtp.json
+        // ---------------------------
         const output = {
-          provider:{
+          provider: {
             PG: rtpPG,
             PRAGMATIC: rtpPRAG
           }
@@ -155,27 +189,41 @@ jobs:
 
         fs.writeFileSync("rtp.json", JSON.stringify(output,null,2));
 
-        // ================================================
-        // 7. WRITE HISTORY FILE (per 5 menit)
-        // ================================================
+        console.log("\nrtp.json UPDATED SUCCESSFULLY");
+
+        // ---------------------------
+        // WRITE HISTORY
+        // ---------------------------
         const hh = String(now.getHours()).padStart(2,"0");
         const mm = String(now.getMinutes()).padStart(2,"0");
 
-        const historyDir = `rtp-history/${today}`;
-        fs.mkdirSync(historyDir,{recursive:true});
-
+        const dir = `rtp-history/${today}`;
+        fs.mkdirSync(dir,{recursive:true});
         fs.writeFileSync(
-          `${historyDir}/${hh}-${mm}.json`,
+          `${dir}/${hh}-${mm}.json`,
           JSON.stringify(output,null,2)
         );
 
-        console.log("DONE. RTP CREATED SUCCESSFULLY.");
+        console.log(`History saved → ${dir}/${hh}-${mm}.json`);
+
+        console.log("\n======== DONE DEBUG ========");
         EOF
 
+    # ============================================================
+    # COMMIT + PUSH
+    # ============================================================
     - name: Push Updates
       run: |
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
+
+        echo "--- GIT STATUS BEFORE COMMIT ---"
+        git status
+
         git add rtp.json rtp-history/
-        git commit -m "Auto RTP Update FINAL FIX" || echo "No changes"
-        git push
+
+        echo "--- TRY COMMIT ---"
+        git commit -m "Auto RTP Update (FULL DEBUG)" || echo "No changes to commit"
+
+        echo "--- TRY PUSH ---"
+        git push || echo "PUSH FAILED (permission error)"
