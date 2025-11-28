@@ -1,4 +1,4 @@
-name: POPREDE RTP Auto Generator (FULL DEBUG)
+name: POPREDE RTP Auto Generator FINAL (1 DECIMAL)
 
 on:
   schedule:
@@ -11,76 +11,66 @@ jobs:
 
     steps:
 
-    # Checkout repo
+    # Checkout Repo
     - uses: actions/checkout@v3
 
-    # Node.js
+    # Node
     - uses: actions/setup-node@v3
       with:
         node-version: "18"
 
     # ============================================================
-    # DOWNLOAD CSV DARI GOOGLE SHEETS (LOG OUTPUT)
+    # DOWNLOAD CSV GAME
     # ============================================================
     - name: Download Games CSV
       run: |
-        echo "Downloading CSV..."
+        echo "Downloading game CSV..."
         curl -L -o games.csv \
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv"
 
-        echo "=== CSV RAW (first 200 chars) ==="
+        echo "=== RAW CSV (first 200 chars) ==="
         head -c 200 games.csv
         echo ""
-        echo "=== CSV FIRST 10 ROWS ==="
+        echo "=== FIRST 10 ROWS ==="
         head -n 10 games.csv
 
+
     # ============================================================
-    # GENERATE RTP + FULL DEBUG LOGGING
+    # GENERATE RTP JSON (FULL 1 DECIMAL + DEBUG)
     # ============================================================
-    - name: Generate RTP JSON + FULL DEBUG
+    - name: Generate RTP JSON (FINAL 1 DECIMAL)
       run: |
         node << 'EOF'
         const fs = require("fs");
 
-        console.log("=====================================");
-        console.log("   POPREDE — RTP GENERATOR DEBUG");
-        console.log("=====================================");
+        console.log("========================================");
+        console.log(" POPREDE FINAL RTP ENGINE (1 DECIMAL)");
+        console.log("========================================");
 
-        // ---------------------------
-        // LOAD CSV
-        // ---------------------------
-        const csvRaw = fs.readFileSync("games.csv","utf8");
-        console.log("\n=== RAW CSV FIRST 300 CHARS ===");
-        console.log(csvRaw.slice(0,300));
+        // =====================================
+        // LOAD CSV (TAB PRIORITY)
+        // =====================================
+        const csvText = fs.readFileSync("games.csv","utf8");
 
-        let raw = csvRaw.trim().split("\n");
-
-        console.log("\n=== FIRST 5 LINES BEFORE SPLIT ===");
-        console.log(raw.slice(0,5));
+        let raw = csvText.trim().split("\n");
 
         raw = raw.map(r =>
           r.includes("\t") ? r.split(/\t+/) : r.split(/[,;]+/)
         );
 
-        console.log("\n=== FIRST 5 LINES AFTER SPLIT ===");
-        console.log(raw.slice(0,5));
-
         const head = raw.shift().map(h => h.trim());
-        console.log("\n=== HEADERS DETECTED ===");
-        console.log(head);
-
         const rows = raw.map(r=>{
-          let o = {};
-          r.forEach((v,i)=> o[head[i]] = v.trim());
+          let o={};
+          r.forEach((v,i)=>o[head[i]] = v.trim());
           return o;
         });
 
-        console.log("\n=== FIRST 5 PARSED OBJECTS ===");
-        console.log(rows.slice(0,5));
+        console.log("HEADERS:", head);
+        console.log("TOTAL ROWS:", rows.length);
 
-        // ---------------------------
-        // PROVIDER DETECTION
-        // ---------------------------
+        // =====================================
+        // PROVIDER DETECT
+        // =====================================
         function detectProvider(p){
           p = (p || "").trim().toLowerCase();
           if(p.startsWith("pg")) return "PG";
@@ -88,37 +78,40 @@ jobs:
           return "OTHER";
         }
 
-        console.log("\n=== PROVIDER DETECT (FIRST 10) ===");
-        console.log(rows.slice(0,10).map(x => x.provider+" → "+detectProvider(x.provider)));
-
-        const PG_list   = rows.filter(x => detectProvider(x.provider)==="PG");
+        const PG_list = rows.filter(x => detectProvider(x.provider)==="PG");
         const PRAG_list = rows.filter(x => detectProvider(x.provider)==="PRAGMATIC");
 
-        console.log("\nPG_count:", PG_list.length);
-        console.log("PRAG_count:", PRAG_list.length);
+        console.log("PG COUNT:", PG_list.length);
+        console.log("PRAG COUNT:", PRAG_list.length);
 
-        // ---------------------------
+        // =====================================
         // TREND ENGINE
-        // ---------------------------
+        // =====================================
         const today = new Date().toISOString().split("T")[0];
-        const trendFile = `rtp-history/${today}/trend.json`;
+        const trendDir = `rtp-history/${today}`;
+        const trendFile = `${trendDir}/trend.json`;
 
         let trend = "normal";
+        fs.mkdirSync(trendDir,{recursive:true});
+
         if(!fs.existsSync(trendFile)){
           const pick = ["up","down","normal"];
           trend = pick[Math.floor(Math.random()*pick.length)];
-          fs.mkdirSync(`rtp-history/${today}`,{recursive:true});
           fs.writeFileSync(trendFile, JSON.stringify({trend}));
         } else {
           trend = JSON.parse(fs.readFileSync(trendFile)).trend;
         }
 
-        console.log("\nTREND TODAY:", trend);
+        console.log("TODAY TREND:", trend);
 
+        // RANDOM 1 DECIMAL CLEAN
         function rand(min,max){
-          return +(Math.random()*(max-min)+min).toFixed(1);
+          return Number((Math.random()*(min-max)+max).toFixed(1));
         }
 
+        // =====================================
+        // DISTRIBUSI RTP NATURAL (1 DECIMAL)
+        // =====================================
         function generateRTP(count){
           let arr = [];
           const high = Math.min(5,count);
@@ -136,94 +129,79 @@ jobs:
             else arr.push(rand(70,90));
           }
 
-          return arr.sort(()=>Math.random()-0.5);
+          return arr.sort(()=>Math.random()-0.5)
+                    .map(n => Number(n.toFixed(1))); // FIX 1 DECIMAL
         }
 
-        // ---------------------------
+        // =====================================
         // DAILY RESET VS SOFT UPDATE
-        // ---------------------------
+        // =====================================
         const now = new Date();
         const hourBR = (now.getUTCHours() - 3 + 24) % 24;
+        console.log("BRAZIL HOUR:", hourBR);
 
-        let rtpPG, rtpPRAG;
-
-        console.log("\nHour (Brazil):", hourBR);
+        let PG_rtp, PRAG_rtp;
 
         if(hourBR === 0){
-          console.log("→ DAILY RESET (00:00)");
-          rtpPG   = generateRTP(PG_list.length);
-          rtpPRAG = generateRTP(PRAG_list.length);
+          console.log("DAILY RESET — FULL REGENERATE");
+          PG_rtp   = generateRTP(PG_list.length);
+          PRAG_rtp = generateRTP(PRAG_list.length);
         } else {
-          console.log("→ SOFT UPDATE");
+          console.log("SOFT UPDATE (5 min)");
+
           let old = {provider:{PG:[],PRAGMATIC:[]}};
           try { old = JSON.parse(fs.readFileSync("rtp.json")); } catch {}
 
-          rtpPG = PG_list.map((_,i)=>{
+          PG_rtp = PG_list.map((_,i)=>{
             let base = old.provider.PG[i] ?? rand(70,90);
             let n = base + rand(-2,2);
-            return Math.max(50,Math.min(99.9,n));
+            return Number(Math.min(99.9,Math.max(50,n)).toFixed(1));
           });
 
-          rtpPRAG = PRAG_list.map((_,i)=>{
+          PRAG_rtp = PRAG_list.map((_,i)=>{
             let base = old.provider.PRAGMATIC[i] ?? rand(70,90);
             let n = base + rand(-2,2);
-            return Math.max(50,Math.min(99.9,n));
+            return Number(Math.min(99.9,Math.max(50,n)).toFixed(1));
           });
         }
 
-        console.log("\n=== SAMPLE RTP PG (first 10) ===");
-        console.log(rtpPG.slice(0,10));
-
-        console.log("\n=== SAMPLE RTP PRAG (first 10) ===");
-        console.log(rtpPRAG.slice(0,10));
-
-        // ---------------------------
-        // WRITE rtp.json
-        // ---------------------------
+        // =====================================
+        // OUTPUT FINAL JSON
+        // =====================================
         const output = {
-          provider: {
-            PG: rtpPG,
-            PRAGMATIC: rtpPRAG
+          provider:{
+            PG: PG_rtp,
+            PRAGMATIC: PRAG_rtp
           }
         };
 
         fs.writeFileSync("rtp.json", JSON.stringify(output,null,2));
+        console.log("rtp.json UPDATED.");
 
-        console.log("\nrtp.json UPDATED SUCCESSFULLY");
-
-        // ---------------------------
-        // WRITE HISTORY
-        // ---------------------------
+        // =====================================
+        // SAVE HISTORY
+        // =====================================
         const hh = String(now.getHours()).padStart(2,"0");
         const mm = String(now.getMinutes()).padStart(2,"0");
 
-        const dir = `rtp-history/${today}`;
-        fs.mkdirSync(dir,{recursive:true});
         fs.writeFileSync(
-          `${dir}/${hh}-${mm}.json`,
+          `${trendDir}/${hh}-${mm}.json`,
           JSON.stringify(output,null,2)
         );
 
-        console.log(`History saved → ${dir}/${hh}-${mm}.json`);
-
-        console.log("\n======== DONE DEBUG ========");
+        console.log(`Saved history: ${trendDir}/${hh}-${mm}.json`);
+        console.log("DONE.");
         EOF
 
+
     # ============================================================
-    # COMMIT + PUSH
+    # PUSH UPDATE
     # ============================================================
     - name: Push Updates
       run: |
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
 
-        echo "--- GIT STATUS BEFORE COMMIT ---"
-        git status
-
         git add rtp.json rtp-history/
-
-        echo "--- TRY COMMIT ---"
-        git commit -m "Auto RTP Update (FULL DEBUG)" || echo "No changes to commit"
-
-        echo "--- TRY PUSH ---"
-        git push || echo "PUSH FAILED (permission error)"
+        git commit -m "Auto RTP (FINAL 1 DECIMAL)" || echo "No changes"
+        git push
