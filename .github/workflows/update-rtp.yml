@@ -1,9 +1,9 @@
-name: POPREDE RTP Auto Generator V3 TURBO
+name: POPREDE RTP Auto Generator V4 FULL DYNAMIC
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # update RTP setiap 5 menit
-    - cron: "*/2 * * * *"   # turbo keep-alive cron
+    - cron: "*/5 * * * *"     # Update RTP setiap 5 menit
+    - cron: "*/2 * * * *"     # Turbo Keep Alive
   workflow_dispatch:
   push:
     branches: [ main ]
@@ -17,13 +17,10 @@ jobs:
 
     - uses: actions/setup-node@v3
       with:
-        node-version: "18"
+        node-version: 18
 
-    - name: Repo Activity Ping
-      run: |
-        curl -I https://github.com/POPREDE/TEST || true
-
-    - name: Keep Repo Alive (Turbo Mode)
+    # Keep GitHub thinking repo is VERY ACTIVE
+    - name: Turbo Activity
       run: |
         echo "$(date)" > .alive
         git add .alive
@@ -34,122 +31,159 @@ jobs:
         curl -L -o games.csv \
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv"
 
-    - name: Generate RTP JSON V3
+    - name: Generate RTP JSON V4 FULL DYNAMIC
       run: |
         node << 'EOF'
         const fs = require("fs");
 
-        // LOAD CSV
+        // Load CSV
         const raw = fs.readFileSync("games.csv","utf8")
-          .trim().split("\n")
+          .trim()
+          .split("\n")
           .map(r => r.split(/[\t,;]+/));
 
         const head = raw.shift();
         const rows = raw.map(r=>{
           let o={};
-          r.forEach((v,i)=>o[head[i]]=v.trim());
+          r.forEach((v,i)=>o[head[i]] = (v||"").trim());
           return o;
         });
 
-        // DETECT PROVIDER
-        function detectProvider(p){
+        // Detect provider
+        function detect(p){
           p=(p||"").toLowerCase();
           if(p.includes("pg")) return "PG";
           if(p.includes("prag")) return "PRAGMATIC";
           return "OTHER";
         }
 
-        const PG  = rows.filter(x=>detectProvider(x.provider)==="PG");
-        const PR  = rows.filter(x=>detectProvider(x.provider)==="PRAGMATIC");
+        const PG = rows.filter(x=>detect(x.provider)==="PG");
+        const PR = rows.filter(x=>detect(x.provider)==="PRAGMATIC");
 
+        // System time
         const now = new Date();
         const today = now.toISOString().split("T")[0];
-        const hourBR = (now.getUTCHours()-3+24)%24;
+        const hourBR = (now.getUTCHours() - 3 + 24) % 24;
 
-        // TREND FILE
-        const trendFile = `rtp-history/${today}/trend.json`;
+        // Load trend
+        let trendFile = `rtp-history/${today}/trend.json`;
         let trend="normal";
 
         if(!fs.existsSync(trendFile)){
-          const pick=["up","down","volatile","steady"];
+          const pick = ["up","down","volatile","steady"];
           trend = pick[Math.floor(Math.random()*pick.length)];
           fs.mkdirSync(`rtp-history/${today}`,{recursive:true});
           fs.writeFileSync(trendFile, JSON.stringify({trend}));
         } else {
-          trend = JSON.parse(fs.readFileSync(trendFile)).trend;
+          trend = JSON.parse(fs.readFileSync(trendFile)).trend || "steady";
         }
 
-        // RANDOM HELPERS
         function r(min,max){return +(Math.random()*(max-min)+min).toFixed(1);}
-        const spikeChance = ()=>Math.random() < 0.10;
 
-        function distribute(count){
+        // V4 — hyper realistic distribution
+        function generateDynamicBase(count, provider){
           let arr=[];
 
           let high = Math.min(6,count);
           let ultra = Math.min(2,count);
           let low = Math.min(15,count);
 
-          // ULTRA HIGH (97–99.9)
+          // Ultra High
           for(let i=0;i<ultra;i++)
             arr.push(r(97,99.9));
 
-          // HIGH (90–97)
-          for(let i=0;i<high-ultra;i++)
-            arr.push(r(90,97));
+          // High
+          for(let i=0;i<high-ultra;i++){
+            if(provider==="PG") arr.push(r(90,97));
+            else arr.push(r(88,97.5));
+          }
 
-          // LOW
-          for(let i=0;i<low;i++)
-            arr.push(r(50,65));
+          // Low
+          for(let i=0;i<low;i++){
+            if(provider==="PG") arr.push(r(55,68));
+            else arr.push(r(50,65));
+          }
 
-          // MID (70–89)
-          while(arr.length < count)
-            arr.push(r(70,89));
+          // Middle realistic band
+          while(arr.length<count){
+            if(provider==="PG") arr.push(r(70,89));
+            else arr.push(r(65,92));
+          }
 
           return arr.sort(()=>Math.random()-0.5);
         }
 
-        function softUpdate(oldArr){
-          return oldArr.map(v=>{
+        // Load old RTP
+        let old={provider:{PG:[],PRAGMATIC:[]}};
+        try{ old = JSON.parse(fs.readFileSync("rtp.json")); }catch{}
+
+        // V4 Soft update engine (full dynamic)
+        function dynamicUpdate(oldArr, provider){
+          return oldArr.map((v,i)=>{
             let val = v;
 
-            // small movement
-            val += r(-1,1);
+            // micro adjustments
+            val += (Math.random()*0.6 - 0.3); // ±0.3
 
-            // medium movement
-            val += (Math.random()*2 - 1);
+            // medium drift
+            val += (Math.random()*1.8 - 0.9); // ±0.9
 
-            // spike occasionally
-            if(spikeChance()) val += (Math.random()*8 - 4);
+            // random spike (10%)
+            if(Math.random()<0.10)
+              val += (Math.random()*8 - 4); // ±4
 
-            // cooldown ultra-high (>97)
-            if(val > 97 && Math.random() < 0.60)
+            // volatility different per provider
+            if(provider==="PRAGMATIC" && Math.random()<0.25)
+              val += (Math.random()*6 - 3);
+
+            // trend effect
+            if(trend==="up") val += r(0.2,0.5);
+            if(trend==="down") val -= r(0.3,0.6);
+            if(trend==="volatile") val += r(-1.5,1.5);
+
+            // heat-cycle (10% chance)
+            if(Math.random()<0.10){
+              val += r(1,3);
+            }
+
+            // cool-cycle (10% chance)
+            if(Math.random()<0.10){
+              val -= r(1,3);
+            }
+
+            // cooldown >97
+            if(val >= 97 && Math.random()<0.60){
               val -= r(2,5);
+            }
 
-            // anti-stuck minimum
-            if(val < 50) val = 50;
+            // auto recovery <60
+            if(val < 60 && Math.random()<0.25){
+              val += r(1,3);
+            }
 
-            // cap max
-            if(val > 99.9) val = 99.9;
+            // caps
+            if(val < 50) val=50;
+            if(val > 99.9) val=99.9;
 
-            // round 1 decimal
             return +val.toFixed(1);
           });
         }
 
-        let old={provider:{PG:[],PRAGMATIC:[]}};
-
-        try{ old = JSON.parse(fs.readFileSync("rtp.json")); }
-        catch{}
-
         let newPG,newPR;
 
+        // Hard reset at Brazil midnight
         if(hourBR===0){
-          newPG = distribute(PG.length);
-          newPR = distribute(PR.length);
+          newPG = generateDynamicBase(PG.length,"PG");
+          newPR = generateDynamicBase(PR.length,"PRAGMATIC");
         } else {
-          newPG = softUpdate(old.provider.PG.length?old.provider.PG:distribute(PG.length));
-          newPR = softUpdate(old.provider.PRAGMATIC.length?old.provider.PRAGMATIC:distribute(PR.length));
+          newPG = dynamicUpdate(
+            old.provider.PG.length ? old.provider.PG : generateDynamicBase(PG.length,"PG"),
+            "PG"
+          );
+          newPR = dynamicUpdate(
+            old.provider.PRAGMATIC.length ? old.provider.PRAGMATIC : generateDynamicBase(PR.length,"PRAGMATIC"),
+            "PRAGMATIC"
+          );
         }
 
         const output = {
@@ -160,15 +194,16 @@ jobs:
         };
 
         fs.writeFileSync("rtp.json", JSON.stringify(output,null,2));
-        fs.appendFileSync("rtp.json"," "); // force change
+        fs.appendFileSync("rtp.json"," "); // force file change
 
-        // history save
-        const hh = String(now.getHours()).padStart(2,"0");
-        const mm = String(now.getMinutes()).padStart(2,"0");
+        const hh = String(now.getHours()).padStart(2,'0');
+        const mm = String(now.getMinutes()).padStart(2,'0');
 
-        const dir = `rtp-history/${today}`;
-        fs.mkdirSync(dir,{recursive:true});
-        fs.writeFileSync(`${dir}/${hh}-${mm}.json`, JSON.stringify(output,null,2));
+        fs.mkdirSync(`rtp-history/${today}`,{recursive:true});
+        fs.writeFileSync(
+          `rtp-history/${today}/${hh}-${mm}.json`,
+          JSON.stringify(output,null,2)
+        );
 
         EOF
 
@@ -177,5 +212,5 @@ jobs:
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
         git add -A
-        git commit -m "rtp V3 update" --allow-empty
+        git commit -m "RTP V4 dynamic update" --allow-empty
         git push
