@@ -187,3 +187,10 @@ jobs:
         git commit -m "Auto RTP Update (RESET + 5 MIN + 1 DEC)" || echo "No changes"
         git push
 
+    - name: Force Activity
+      run: |
+        echo $(date) > activity.txt
+        git add activity.txt
+        git commit -m "activity-ping" || echo "no changes"
+        git push
+
