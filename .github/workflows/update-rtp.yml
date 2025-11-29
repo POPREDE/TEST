@@ -1,8 +1,8 @@
-name: POPREDE RTP Auto Generator SUPER DYNAMIC V4.5
+name: POPREDE RTP Auto Generator V5 FULL
 
 on:
   schedule:
-    - cron: "*/5 * * * *"
+    - cron: "*/5 * * * *"   # auto update 5 menit
   workflow_dispatch:
 
 jobs:
@@ -16,198 +16,212 @@ jobs:
       with:
         node-version: "18"
 
-    # ================================================================
-    # DOWNLOAD CSV
-    # ================================================================
+    # ===============================================================
+    # DOWNLOAD GAME LIST (TSV = TAB DELIMITER)
+    # ===============================================================
     - name: Download Games CSV
       run: |
         curl -L -o games.csv \
         "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=tsv"
 
-    # ================================================================
-    # GENERATE RTP V4.5 SUPER DYNAMIC
-    # ================================================================
+    # ===============================================================
+    # RTP GENERATION V5 — FULL DYNAMIC + SMART DETECTOR
+    # ===============================================================
     - name: Generate RTP JSON
       run: |
         node << 'EOF'
         const fs = require("fs");
 
-        // ============================================================
-        // 1. Load TSV (Google Sheets auto uses TAB)
-        // ============================================================
-        const raw = fs.readFileSync("games.csv","utf8")
+        // ==============================================================
+        // 1. LOAD TSV CORRECTLY (KESEMPURNAAN 100%)
+        // ==============================================================
+        const rowsRaw = fs.readFileSync("games.csv","utf8")
           .trim()
           .split("\n")
-          .map(r => r.split("\t"));
+          .map(line => line.split("\t"));
 
-        const head = raw.shift().map(x=>x.trim());
-        const rows = raw.map(r=>{
-          let o={};
-          r.forEach((v,i)=>o[head[i]] = v.trim());
+        const head = rowsRaw.shift().map(h => h.trim());
+        const rows = rowsRaw.map(r => {
+          let o = {};
+          r.forEach((v,i)=> o[head[i]] = (v||"").trim());
           return o;
         });
 
-        // ============================================================
-        // 2. Provider Detection
-        // ============================================================
-        function detect(p){
-          p = (p||"").toLowerCase();
-          if(p.startsWith("pg")) return "PG";
-          if(p.startsWith("prag")) return "PRAGMATIC";
+        // ==============================================================
+        // 2. SMART PROVIDER DETECTOR (V5 AI)
+        //    Anti-casing • Anti-spasi • Anti-nama tidak standar
+        // ==============================================================
+        function detectProvider(p){
+          p = (p||"").toLowerCase().trim();
+
+          if(p.includes("pg")) return "PG";
+          if(p.includes("soft")) return "PG";
+          if(p.includes("pgsoft")) return "PG";
+          if(p.includes("prag")) return "PRAGMATIC";
+          if(p.includes("pp")) return "PRAGMATIC";
+          if(p.includes("play")) return "PRAGMATIC";
+
           return null;
         }
 
-        const PG  = rows.filter(r=>detect(r.provider)==="PG");
-        const PRG = rows.filter(r=>detect(r.provider)==="PRAGMATIC");
+        const PG = rows.filter(r=>detectProvider(r.provider)==="PG");
+        const PR = rows.filter(r=>detectProvider(r.provider)==="PRAGMATIC");
 
-        // ============================================================
-        // 3. Helper RNG
-        // ============================================================
-        const rand = (a,b)=> Number((Math.random()*(b-a)+a).toFixed(1));
+        const pgCount = PG.length;
+        const prCount = PR.length;
 
-        // ============================================================
-        // 4. Trend Engine (Daily)
-        // ============================================================
+        console.log("PG Count:", pgCount);
+        console.log("PR Count:", prCount);
+
+        // ==============================================================
+        // 3. RANDOM HELPER (1 DECIMAL)
+        // ==============================================================
+        const rand = (a,b) => Number((Math.random()*(b-a)+a).toFixed(1));
+
+        // ==============================================================
+        // 4. TREND ENGINE HARIAN (UP • DOWN • NORMAL)
+        // ==============================================================
         const today = new Date().toISOString().split("T")[0];
-        const dir = `rtp-history/${today}`;
-        const trendFile = `${dir}/trend.json`;
-        fs.mkdirSync(dir,{recursive:true});
+        const trendDir = `rtp-history/${today}`;
+        const trendFile = `${trendDir}/trend.json`;
 
-        let trend="normal";
+        fs.mkdirSync(trendDir,{recursive:true});
+
+        let trend = "normal";
+
         if(!fs.existsSync(trendFile)){
-          const pick = ["up","down","normal"];
-          trend = pick[Math.floor(Math.random()*pick.length)];
+          const t = ["up","down","normal"];
+          trend = t[Math.floor(Math.random()*t.length)];
           fs.writeFileSync(trendFile, JSON.stringify({trend}));
         } else {
           trend = JSON.parse(fs.readFileSync(trendFile)).trend;
         }
 
-        // ============================================================
-        // 5. NATURAL DISTRIBUTION ENGINE V4.5
-        // ============================================================
+        console.log("Trend hari ini:", trend);
+
+        // ==============================================================
+        // 5. DISTRIBUSI FULL NATURAL (V5)
+        // ==============================================================
         function generateNatural(count){
-          let out = [];
-          const high = Math.min(6, count);
-          const low  = Math.min(15, count-high);
+          let arr = [];
 
-          // HIGH
-          for(let i=0;i<high;i++){
+          // high RTP
+          let highCount = Math.min(6,count);
+          for(let i=0;i<highCount;i++){
             let base = trend==="up" ? rand(93,99.9) : rand(90,96);
-            out.push(base);
+            arr.push(base);
           }
 
-          // LOW
-          for(let i=0;i<low;i++){
+          // low RTP
+          let lowCount = Math.min(15,count-highCount);
+          for(let i=0;i<lowCount;i++){
             let base = trend==="down" ? rand(50,63) : rand(55,70);
-            out.push(base);
+            arr.push(base);
           }
 
-          // MID
-          while(out.length < count){
-            if(trend==="down") out.push(rand(63,82));
-            else if(trend==="up") out.push(rand(78,93));
-            else out.push(rand(70,89));
+          // mid RTP (remaining)
+          while(arr.length < count){
+            if(trend==="up") arr.push(rand(78,93));
+            else if(trend==="down") arr.push(rand(63,82));
+            else arr.push(rand(70,89));
           }
 
-          out = out.sort(()=>Math.random()-0.5);
+          // shuffle
+          arr = arr.sort(()=>Math.random()-0.5);
 
-          // Ultra-high control: max ⭐2⭐
-          let ultra = out.filter(v=>v>=97);
-          if(ultra.length>2){
-            // scale down excess
+          // ultra-high limit
+          let ultra = arr.filter(v=>v>=97);
+          if(ultra.length > 2){
             for(let i=2;i<ultra.length;i++){
-              let idx = out.indexOf(ultra[i]);
-              out[idx] = rand(90,95);
+              let idx = arr.indexOf(ultra[i]);
+              arr[idx] = rand(90,95);
             }
           }
 
-          return out.map(v=>Number(v.toFixed(1)));
+          return arr.map(v=>Number(v.toFixed(1)));
         }
 
-        // ============================================================
-        // 6. Brazil Time Reset
-        // ============================================================
+        // ==============================================================
+        // 6. BRAZIL RESET TIME
+        // ==============================================================
         const now = new Date();
         const hourBR = (now.getUTCHours() - 3 + 24)%24;
 
-        let newPG, newPRG;
+        let newPG, newPR;
 
-        // ============================================================
-        // 7. HARD RESET DAILY
-        // ============================================================
         if(hourBR === 0){
-          newPG  = generateNatural(PG.length);
-          newPRG = generateNatural(PRG.length);
-        }
-        else {
-          // ============================================================
-          // 8. SOFT UPDATE SUPER-DYNAMIC
-          // ============================================================
+          console.log("HARD RESET 00:00 BR");
+          newPG = generateNatural(pgCount);
+          newPR = generateNatural(prCount);
+        } else {
+          console.log("SOFT UPDATE (5 menit)");
+
           let old = {provider:{PG:[],PRAGMATIC:[]}};
-          try{ old = JSON.parse(fs.readFileSync("rtp.json")); } catch{}
+          try { old = JSON.parse(fs.readFileSync("rtp.json")); } catch {}
 
           function evolve(oldArr){
             return oldArr.map(v=>{
-              if(v===undefined) v = rand(70,90);
+              if(v === undefined) v = rand(70,90);
 
               let change = 0;
 
-              // Small fluctuations
-              change += rand(-1.2,1.2);
+              // small natural movement
+              change += rand(-1.0,1.3);
 
-              // Random mid fluctuation (20% chance)
-              if(Math.random()<0.20)
+              // 20% medium move
+              if(Math.random() < 0.2)
                 change += rand(-2,2);
 
-              // Spike (10% chance)
-              if(Math.random()<0.10)
+              // 10% spike
+              if(Math.random() < 0.1)
                 change += rand(2,4);
 
-              // Overheat control: if over 97 drop
-              if(v>97)
+              // overheat control
+              if(v >= 97)
                 change += rand(-3,-1);
 
-              // Always clamp
               let x = v + change;
               return Number(Math.max(50, Math.min(99.9,x)).toFixed(1));
             });
           }
 
-          newPG  = evolve(old.provider.PG  ?? []);
-          newPRG = evolve(old.provider.PRAGMATIC ?? []);
+          newPG = evolve(old.provider.PG ?? []);
+          newPR = evolve(old.provider.PRAGMATIC ?? []);
         }
 
-        // ============================================================
-        // 9. FINAL SAVE + NOISE INJECTION
-        // ============================================================
+        // ==============================================================
+        // 7. FINAL SAVE + ANTI-CACHE NOISE
+        // ==============================================================
         const out = {
           provider:{
             PG: newPG,
-            PRAGMATIC: newPRG
+            PRAGMATIC: newPR
           },
-          noise: Math.random() // anti-cache
+          noise: Math.random()
         };
 
         fs.writeFileSync("rtp.json", JSON.stringify(out,null,2));
 
-        // history
+        // history file
         const hh = String(now.getHours()).padStart(2,"0");
         const mm = String(now.getMinutes()).padStart(2,"0");
 
         fs.writeFileSync(
-          `${dir}/${hh}-${mm}.json`,
+          `${trendDir}/${hh}-${mm}.json`,
           JSON.stringify(out,null,2)
         );
 
+        console.log("RTP V5 berhasil dibuat.");
         EOF
 
-    # ============================================================
+    # ===============================================================
     # PUSH UPDATE
-    # ============================================================
+    # ===============================================================
     - name: Push Updates
       run: |
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
         git add rtp.json rtp-history/
-        git commit -m "SUPER DYNAMIC RTP V4.5 Update" || echo "No changes"
+        git commit -m "RTP V5 Auto Update" || echo "No changes"
         git push
+
