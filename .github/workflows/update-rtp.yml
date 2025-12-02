@@ -32,9 +32,7 @@ jobs:
         node << 'EOF'
         const fs = require("fs");
 
-        // ==============================================================
-        // 1. LOAD TSV CORRECTLY (KESEMPURNAAN 100%)
-        // ==============================================================
+        // LOAD TSV
         const rowsRaw = fs.readFileSync("games.csv","utf8")
           .trim()
           .split("\n")
@@ -47,20 +45,15 @@ jobs:
           return o;
         });
 
-        // ==============================================================
-        // 2. SMART PROVIDER DETECTOR (V5 AI)
-        //    Anti-casing • Anti-spasi • Anti-nama tidak standar
-        // ==============================================================
+        // SMART PROVIDER DETECTOR
         function detectProvider(p){
           p = (p||"").toLowerCase().trim();
-
           if(p.includes("pg")) return "PG";
           if(p.includes("soft")) return "PG";
           if(p.includes("pgsoft")) return "PG";
           if(p.includes("prag")) return "PRAGMATIC";
           if(p.includes("pp")) return "PRAGMATIC";
           if(p.includes("play")) return "PRAGMATIC";
-
           return null;
         }
 
@@ -70,17 +63,10 @@ jobs:
         const pgCount = PG.length;
         const prCount = PR.length;
 
-        console.log("PG Count:", pgCount);
-        console.log("PR Count:", prCount);
-
-        // ==============================================================
-        // 3. RANDOM HELPER (1 DECIMAL)
-        // ==============================================================
+        // RANDOM 1 DECIMAL
         const rand = (a,b) => Number((Math.random()*(b-a)+a).toFixed(1));
 
-        // ==============================================================
-        // 4. TREND ENGINE HARIAN (UP • DOWN • NORMAL)
-        // ==============================================================
+        // TREND ENGINE
         const today = new Date().toISOString().split("T")[0];
         const trendDir = `rtp-history/${today}`;
         const trendFile = `${trendDir}/trend.json`;
@@ -88,7 +74,6 @@ jobs:
         fs.mkdirSync(trendDir,{recursive:true});
 
         let trend = "normal";
-
         if(!fs.existsSync(trendFile)){
           const t = ["up","down","normal"];
           trend = t[Math.floor(Math.random()*t.length)];
@@ -97,91 +82,65 @@ jobs:
           trend = JSON.parse(fs.readFileSync(trendFile)).trend;
         }
 
-        console.log("Trend hari ini:", trend);
-
-        // ==============================================================
-        // 5. DISTRIBUSI FULL NATURAL (V5)
-        // ==============================================================
+        // ==========================================================
+        //  DISTRIBUSI V5 — LIMIT BARU (HIGH=15 / LOW=20)
+        // ==========================================================
         function generateNatural(count){
           let arr = [];
 
-          // high RTP
-          let highCount = Math.min(6,count);
+          const HIGH_LIMIT = 15;
+          const LOW_LIMIT = 10;
+
+          // HIGH RTP
+          let highCount = Math.min(HIGH_LIMIT, count);
           for(let i=0;i<highCount;i++){
             let base = trend==="up" ? rand(93,99.9) : rand(90,96);
             arr.push(base);
           }
 
-          // low RTP
-          let lowCount = Math.min(15,count-highCount);
+          // LOW RTP (30–50%)
+          let lowCount = Math.min(LOW_LIMIT, count - arr.length);
           for(let i=0;i<lowCount;i++){
-            let base = trend==="down" ? rand(50,63) : rand(55,70);
+            let base = rand(30,55);
             arr.push(base);
           }
 
-          // mid RTP (remaining)
+          // MID RANDOM 55–90
           while(arr.length < count){
-            if(trend==="up") arr.push(rand(78,93));
-            else if(trend==="down") arr.push(rand(63,82));
-            else arr.push(rand(70,89));
+            let base = rand(55,90);
+            arr.push(base);
           }
 
-          // shuffle
+          // SHUFFLE
           arr = arr.sort(()=>Math.random()-0.5);
-
-          // ultra-high limit
-          let ultra = arr.filter(v=>v>=97);
-          if(ultra.length > 2){
-            for(let i=2;i<ultra.length;i++){
-              let idx = arr.indexOf(ultra[i]);
-              arr[idx] = rand(90,95);
-            }
-          }
 
           return arr.map(v=>Number(v.toFixed(1)));
         }
 
-        // ==============================================================
-        // 6. BRAZIL RESET TIME
-        // ==============================================================
+        // RESET TIME BR
         const now = new Date();
         const hourBR = (now.getUTCHours() - 3 + 24)%24;
 
         let newPG, newPR;
 
         if(hourBR === 0){
-          console.log("HARD RESET 00:00 BR");
           newPG = generateNatural(pgCount);
           newPR = generateNatural(prCount);
         } else {
-          console.log("SOFT UPDATE (5 menit)");
-
           let old = {provider:{PG:[],PRAGMATIC:[]}};
-          try { old = JSON.parse(fs.readFileSync("rtp.json")); } catch {}
+          try{ old = JSON.parse(fs.readFileSync("rtp.json")); }catch{}
 
-          function evolve(oldArr){
-            return oldArr.map(v=>{
+          function evolve(ar){
+            return ar.map(v=>{
               if(v === undefined) v = rand(70,90);
 
-              let change = 0;
+              let c = rand(-1.0,1.3);
+              if(Math.random() < 0.2) c += rand(-2,2);
+              if(Math.random() < 0.1) c += rand(2,4);
+              if(v >= 97) c += rand(-3,-1);
 
-              // small natural movement
-              change += rand(-1.0,1.3);
-
-              // 20% medium move
-              if(Math.random() < 0.2)
-                change += rand(-2,2);
-
-              // 10% spike
-              if(Math.random() < 0.1)
-                change += rand(2,4);
-
-              // overheat control
-              if(v >= 97)
-                change += rand(-3,-1);
-
-              let x = v + change;
-              return Number(Math.max(50, Math.min(99.9,x)).toFixed(1));
+              let x = v+c;
+              return Number(Math.max(30, Math.min(99.9,x)).toFixed(1));
             });
           }
 
@@ -189,9 +148,6 @@ jobs:
           newPR = evolve(old.provider.PRAGMATIC ?? []);
         }
 
-        // ==============================================================
-        // 7. FINAL SAVE + ANTI-CACHE NOISE
-        // ==============================================================
         const out = {
           provider:{
             PG: newPG,
@@ -202,7 +158,6 @@ jobs:
 
         fs.writeFileSync("rtp.json", JSON.stringify(out,null,2));
 
-        // history file
         const hh = String(now.getHours()).padStart(2,"0");
         const mm = String(now.getMinutes()).padStart(2,"0");
 
@@ -211,7 +166,7 @@ jobs:
           JSON.stringify(out,null,2)
         );
 
-        console.log("RTP V5 berhasil dibuat.");
+        console.log("RTP V5 berhasil dibuat (UPDATED LIMITS).");
         EOF
 
     # ===============================================================
@@ -222,6 +177,5 @@ jobs:
         git config user.name "github-actions"
         git config user.email "github-actions@github.com"
         git add rtp.json rtp-history/
-        git commit -m "RTP V5 Auto Update" || echo "No changes"
+        git commit -m "RTP V5 Auto Update (UPDATED LIMITS)" || echo "No changes"
         git push
-
