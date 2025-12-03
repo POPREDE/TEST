@@ -1,239 +1,136 @@
-//------------------------------------------------------------
-// CSV SOURCES
-//------------------------------------------------------------
-const GAME_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv";
-const LINK_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=1888859615&single=true&output=csv";
-const BANNER_CSV = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=773368200&single=true&output=csv";
-const LOGO_CSV   = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=1030942322&single=true&output=csv";
+/* ===========================
+   GOOGLE SHEET CONFIG
+   =========================== */
 
-const RTP_JSON   = "https://raw.githubusercontent.com/POPREDE/TEST/refs/heads/main/rtp.json";
+const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?output=csv";
 
 
-//------------------------------------------------------------
-// CSV PARSER — TAB PRIORITY
-//------------------------------------------------------------
-async function fetchCSV(url) {
-    const res = await fetch(url + "&cache=" + Date.now(), { cache: "no-store" });
+/* ===========================
+   LOAD CSV
+   =========================== */
+async function loadCSV() {
+    const res = await fetch(sheetURL);
     const text = await res.text();
+    return text.split("\n").map(r => r.split(","));
+}
 
-    const rows = text.trim().split("\n").map(r =>
-        r.includes("\t") ? r.split(/\t+/) : r.split(/[,;]+/)
-    );
 
-    const headers = rows.shift().map(h => h.trim());
+/* ===========================
+   PUT DATA INTO WEBSITE
+   =========================== */
+async function initSite() {
+    const rows = await loadCSV();
 
-    return rows.map(r => {
-        let o = {};
-        r.forEach((v, i) => o[headers[i]] = v?.trim());
-        return o;
+    let banners = [];
+    let logos = [];
+    let games = [];
+
+    rows.forEach(r => {
+        const type = r[0];
+        const img = r[1];
+        const link = r[2];
+        const extra = r[3] || "";
+
+        if (type === "header_logo") document.getElementById("header_logo").src = img;
+        if (type === "header_button") document.getElementById("header_btn").href = link;
+
+        if (type === "hero_title") document.getElementById("hero_title").innerText = extra;
+        if (type === "hero_desc")  document.getElementById("hero_desc").innerText = extra;
+
+        if (type.includes("banner")) banners.push({img, link, caption: extra});
+        if (type.includes("logo_")) logos.push({img, link});
+
+        if (type === "game") games.push({img, name: extra, rtp: Number(link)});
     });
+
+    generateBanner(banners);
+    generateLogos(logos);
+    generateGames(games);
 }
 
-
-//------------------------------------------------------------
-// LOGIN, REGISTER, LOGO HEADER LOAD
-//------------------------------------------------------------
-async function loadLinks() {
-    const list = await fetchCSV(LINK_CSV);
-    const clean = x => (x || "").trim().toLowerCase();
-
-    document.getElementById("btn-register").href =
-        list.find(x => clean(x.key) === "register")?.value || "#";
-
-    document.getElementById("btn-login").href =
-        list.find(x => clean(x.key) === "login")?.value || "#";
-
-    document.getElementById("logo-poprede").src =
-        list.find(x => clean(x.key) === "logo")?.value || "";
-}
+initSite();
 
 
-//------------------------------------------------------------
-// BANNER SLIDER — FIXED 1 BANNER PER SLIDE
-//------------------------------------------------------------
-let bannerList = [];
-let bannerIndex = 0;
-let bannerTimer = null;
-let startX = 0;
 
-async function loadBanners() {
-    bannerList = await fetchCSV(BANNER_CSV);
-
-    const track = document.getElementById("banner-track");
-    const dots = document.getElementById("banner-dots");
-    const caption = document.getElementById("banner-caption");
+/* ===========================
+   BANNER SLIDER
+   =========================== */
+function generateBanner(list) {
+    const track = document.getElementById("bannerTrack");
+    const dots  = document.getElementById("bannerDots");
+    const caption = document.getElementById("bannerCaption");
 
     track.innerHTML = "";
     dots.innerHTML = "";
 
-    bannerList.forEach((b, i) => {
+    list.forEach((b,i) => {
         track.innerHTML += `
             <div class="banner-item">
-                <img src="${b.banner_url}">
+                <a href="${b.link}">
+                    <img src="${b.img}">
+                </a>
             </div>
         `;
-        dots.innerHTML += `
-            <span class="dot ${i === 0 ? "active" : ""}" data-id="${i}"></span>
+        dots.innerHTML += `<span class="dot ${i===0?'active':''}" data-index="${i}"></span>`;
+    });
+
+    caption.innerText = list[0].caption;
+
+    let index = 0;
+    setInterval(() => {
+        index = (index + 1) % list.length;
+        track.style.transform = `translateX(-${index * 100}%)`;
+        caption.innerText = list[index].caption;
+
+        [...dots.children].forEach(d => d.classList.remove("active"));
+        dots.children[index].classList.add("active");
+
+    }, 3500);
+}
+
+
+
+/* ===========================
+   LOGOS
+   =========================== */
+function generateLogos(list) {
+    let out = "";
+    list.forEach(l => {
+        out += `
+            <a href="${l.link}">
+                <img src="${l.img}">
+            </a>
         `;
-    });
-
-    caption.textContent = bannerList[0]?.banner_text || "";
-
-    initBannerEngine();
-}
-
-function initBannerEngine() {
-    const track = document.getElementById("banner-track");
-    const items = document.querySelectorAll(".banner-item");
-    const dots = document.querySelectorAll(".banner-dots .dot");
-    const caption = document.getElementById("banner-caption");
-
-    function move(n) {
-        bannerIndex = (n + bannerList.length) % bannerList.length;
-        const offset = items[bannerIndex].offsetLeft * -1;
-
-        track.style.transform = `translateX(${offset}px)`;
-
-        dots.forEach(d => d.classList.remove("active"));
-        dots[bannerIndex].classList.add("active");
-
-        caption.textContent = bannerList[bannerIndex]?.banner_text || "";
-    }
-
-    dots.forEach(dot => {
-        dot.onclick = () => {
-            clearInterval(bannerTimer);
-            move(Number(dot.dataset.id));
-            auto();
-        };
-    });
-
-    function auto() {
-        bannerTimer = setInterval(() => move(bannerIndex + 1), 3500);
-    }
-    auto();
-
-    track.addEventListener("touchstart", e => startX = e.touches[0].clientX);
-    track.addEventListener("touchend", e => {
-        const dx = e.changedTouches[0].clientX - startX;
-        if (dx > 50) {
-            clearInterval(bannerTimer);
-            move(bannerIndex - 1);
-            auto();
-        }
-        if (dx < -50) {
-            clearInterval(bannerTimer);
-            move(bannerIndex + 1);
-            auto();
-        }
-    });
-
-    window.addEventListener("resize", () => {
-        const offset = items[bannerIndex].offsetLeft * -1;
-        track.style.transform = `translateX(${offset}px)`;
-    });
+    })
+    document.getElementById("logoStrip").innerHTML = out;
 }
 
 
-//------------------------------------------------------------
-// LOGO PROVIDER GRID (PG & PRAG ONLY)
-//------------------------------------------------------------
-async function loadLogoStrip() {
-    const list = await fetchCSV(LOGO_CSV);
-    const grid = document.getElementById("logo-strip");
 
-    grid.innerHTML = "";
+/* ===========================
+   GAME GRID
+   =========================== */
+function generateGames(list) {
+    let out = "";
 
-    const logos = list
-        .filter(l =>
-            l.provider?.toLowerCase().includes("pg") ||
-            l.provider?.toLowerCase().includes("prag")
-        )
-        .slice(0, 2);
+    list.forEach(g => {
+        let color =
+            g.rtp >= 80 ? "rtp-green" :
+            g.rtp >= 60 ? "rtp-yellow" : "rtp-red";
 
-    logos.forEach(logo => {
-        grid.innerHTML += `<img src="${logo.logo_url}">`;
-    });
-}
+        out += `
+            <div class="card">
+                <img src="${g.img}">
+                <div class="game-name">${g.name}</div>
 
+                <div class="rtp-bar-container">
+                    <div class="rtp-bar ${color}" style="width:${g.rtp}%"></div>
+                </div>
 
-//------------------------------------------------------------
-// RTP JSON FETCH — ANTI CACHE 100%
-//------------------------------------------------------------
-async function loadRTP(provider) {
-    const res = await fetch(
-        RTP_JSON + "?v=" + new Date().getTime(),
-        { cache: "no-store" }
-    );
-
-    const json = await res.json();
-    return json.provider[provider] || [];
-}
-
-
-//------------------------------------------------------------
-// RTP COLOR BASED ON VALUE
-//------------------------------------------------------------
-function getColorClass(rtp) {
-    if (rtp >= 90) return "rtp-green";
-    if (rtp >= 70) return "rtp-yellow";
-    return "rtp-red";
-}
-
-
-//------------------------------------------------------------
-// RENDER GAME GRID (1 Desimal Fix)
-//------------------------------------------------------------
-async function renderGames(provider = "PG") {
-    const allGames = await fetchCSV(GAME_CSV);
-    const games = allGames.filter(g =>
-        (g.provider || "").trim().toLowerCase().startsWith(provider.toLowerCase())
-    );
-
-    const rtp = await loadRTP(provider);
-    const grid = document.getElementById("game-grid");
-
-    grid.innerHTML = "";
-
-    games.forEach((g, i) => {
-        const r = Number(rtp[i] ?? 50);
-        const r1 = Number(r.toFixed(1)); // 🔥 1 desimal fix
-
-        const color = getColorClass(r1);
-
-        grid.innerHTML += `
-        <div class="card">
-            <img src="${g.image_url}">
-            <div class="game-name">${g.game_name}</div>
-
-            <div class="rtp-bar-container">
-                <div class="rtp-bar ${color}" style="width:${r1}%"></div>
+                <div class="rtp-text">${g.rtp}% RTP</div>
             </div>
-
-            <div class="rtp-text">${r1}%</div>
-        </div>
         `;
     });
+
+    document.getElementById("game-grid").innerHTML = out;
 }
-
-
-//------------------------------------------------------------
-// PROVIDER SWITCH BUTTON
-//------------------------------------------------------------
-document.querySelectorAll(".provider").forEach(btn => {
-    btn.onclick = () => {
-        document.querySelectorAll(".provider").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        renderGames(btn.dataset.provider);
-    };
-});
-
-
-//------------------------------------------------------------
-// INIT ALL
-//------------------------------------------------------------
-loadLinks();
-loadBanners();
-loadLogoStrip();
-renderGames("PG");
-
