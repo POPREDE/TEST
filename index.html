@@ -2,57 +2,68 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Exclusive Premium Layout</title>
-
-    <!-- CSS -->
+    <title>PopRede Premium</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<div class="container">
-
-    <!-- TOP BANNERS -->
-    <div class="top-banners">
-
-        <!-- Banner kiri -->
-        <a id="banner1_link" class="banner-card">
-            <img id="banner1_img" alt="Banner 1">
-        </a>
-
-        <!-- Banner kanan -->
-        <a id="banner2_link" class="banner-card">
-            <img id="banner2_img" alt="Banner 2">
-        </a>
-
+<!-- HEADER -->
+<div class="header">
+    <div class="header-logo">
+        <img id="header_logo" src="">
     </div>
 
+    <a id="header_btn" class="header-btn" href="#">
+        Acessar
+    </a>
+</div>
 
-    <!-- LOGO AREA -->
-    <div class="logo-section">
-        <div class="logo-row">
 
-            <!-- PG -->
-            <a id="pg_link" class="logo-card">
-                <img id="pg_img" alt="PG Soft">
-            </a>
 
-            <!-- LOGO TENGAH -->
-            <a id="mid_link" class="logo-card">
-                <img id="mid_img" alt="Middle Logo">
-            </a>
+<!-- HERO SECTION -->
+<div class="hero-container">
 
-            <!-- PRAGMATIC -->
-            <a id="prag_link" class="logo-card">
-                <img id="prag_img" alt="Pragmatic Play">
-            </a>
+    <div class="hero-text">
+        <h2 id="hero_title">Loading...</h2>
+        <p id="hero_desc">Loading description...</p>
+    </div>
 
+    <div class="hero-banner">
+        <div class="banner-slider">
+            <div class="banner-track" id="bannerTrack"></div>
         </div>
+
+        <div class="banner-caption" id="bannerCaption"></div>
+        <div class="banner-dots" id="bannerDots"></div>
     </div>
 
 </div>
 
-<!-- JS -->
-<script src="script.js"></script>
 
+
+<!-- PROVIDER TITLE -->
+<div class="provider-title">
+    PROVIDERS
+</div>
+
+<!-- LOGO STRIP -->
+<div class="logo-strip" id="logoStrip"></div>
+
+
+
+<!-- PROVIDER SWITCH -->
+<div class="provider-switch">
+    <button class="provider active" data-provider="PG">PG Soft</button>
+    <button class="provider" data-provider="PRAG">Pragmatic Play</button>
+</div>
+
+
+
+<!-- GAME GRID -->
+<div id="game-grid"></div>
+
+
+
+<script src="script.js"></script>
 </body>
 </html>
