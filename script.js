@@ -1,50 +1,101 @@
-/* ===========================
-   GOOGLE SHEET CONFIG
-   =========================== */
+/* ===========================================
+   MULTI-SHEET CSV URLS (PUNYA KAMU)
+   =========================================== */
 
-const sheetURL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?output=csv";
+const CSV = {
+    gamelist: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=csv",
+
+    links: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=1888859615&single=true&output=csv",
+
+    banners: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=773368200&single=true&output=csv",
+
+    logogrid: "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=1030942322&single=true&output=csv"
+};
 
 
-/* ===========================
+/* ===========================================
    LOAD CSV
-   =========================== */
-async function loadCSV() {
-    const res = await fetch(sheetURL);
+   =========================================== */
+async function loadCSV(url) {
+    const res = await fetch(url);
     const text = await res.text();
-    return text.split("\n").map(r => r.split(","));
+    return text.trim().split("\n").map(r => r.split(","));
 }
 
 
-/* ===========================
-   PUT DATA INTO WEBSITE
-   =========================== */
+/* ===========================================
+   INIT (LOAD ALL SHEETS)
+   =========================================== */
 async function initSite() {
-    const rows = await loadCSV();
 
-    let banners = [];
-    let logos = [];
-    let games = [];
+    const gameRows   = await loadCSV(CSV.gamelist);
+    const linkRows   = await loadCSV(CSV.links);
+    const bannerRows = await loadCSV(CSV.banners);
+    const logoRows   = await loadCSV(CSV.logogrid);
 
-    rows.forEach(r => {
-        const type = r[0];
-        const img = r[1];
-        const link = r[2];
-        const extra = r[3] || "";
 
-        if (type === "header_logo") document.getElementById("header_logo").src = img;
-        if (type === "header_button") document.getElementById("header_btn").href = link;
+    /* -----------------------------------------------------
+       LINKS SHEET → HEADER + HERO
+       ----------------------------------------------------- */
+    linkRows.forEach(r => {
+        const key   = r[0];
+        const img   = r[1];
+        const value = r[2];
 
-        if (type === "hero_title") document.getElementById("hero_title").innerText = extra;
-        if (type === "hero_desc")  document.getElementById("hero_desc").innerText = extra;
+        if (key === "header_logo") {
+            document.getElementById("header_logo").src = img;
+        }
 
-        if (type.includes("banner")) banners.push({img, link, caption: extra});
-        if (type.includes("logo_")) logos.push({img, link});
+        if (key === "header_btn") {
+            document.getElementById("header_btn").href = value;
+        }
 
-        if (type === "game") games.push({img, name: extra, rtp: Number(link)});
+        if (key === "hero_title") {
+            document.getElementById("hero_title").innerText = value;
+        }
+
+        if (key === "hero_desc") {
+            document.getElementById("hero_desc").innerText = value;
+        }
     });
 
+
+
+    /* -----------------------------------------------------
+       BANNERS SHEET
+       ----------------------------------------------------- */
+    let banners = bannerRows.map(r => ({
+        img: r[0],
+        link: r[1],
+        caption: r[2] || ""
+    }));
+
     generateBanner(banners);
+
+
+
+    /* -----------------------------------------------------
+       LOGO GRID SHEET
+       ----------------------------------------------------- */
+    let logos = logoRows.map(r => ({
+        img: r[0],
+        link: r[1]
+    }));
+
     generateLogos(logos);
+
+
+
+    /* -----------------------------------------------------
+       GAMELIST SHEET
+       ----------------------------------------------------- */
+    let games = gameRows.map(r => ({
+        provider: r[0],
+        img: r[1],
+        name: r[2],
+        rtp: Number(r[3])
+    }));
+
     generateGames(games);
 }
 
@@ -52,12 +103,12 @@ initSite();
 
 
 
-/* ===========================
+/* ===========================================
    BANNER SLIDER
-   =========================== */
+   =========================================== */
 function generateBanner(list) {
-    const track = document.getElementById("bannerTrack");
-    const dots  = document.getElementById("bannerDots");
+    const track   = document.getElementById("bannerTrack");
+    const dots    = document.getElementById("bannerDots");
     const caption = document.getElementById("bannerCaption");
 
     track.innerHTML = "";
@@ -71,12 +122,16 @@ function generateBanner(list) {
                 </a>
             </div>
         `;
-        dots.innerHTML += `<span class="dot ${i===0?'active':''}" data-index="${i}"></span>`;
+
+        dots.innerHTML += `
+            <span class="dot ${i===0?"active":""}" data-index="${i}"></span>
+        `;
     });
 
-    caption.innerText = list[0].caption;
+    caption.innerText = list[0]?.caption ?? "";
 
     let index = 0;
+
     setInterval(() => {
         index = (index + 1) % list.length;
         track.style.transform = `translateX(-${index * 100}%)`;
@@ -90,47 +145,53 @@ function generateBanner(list) {
 
 
 
-/* ===========================
-   LOGOS
-   =========================== */
+/* ===========================================
+   LOGO GRID GENERATOR
+   =========================================== */
 function generateLogos(list) {
-    let out = "";
+    let html = "";
+
     list.forEach(l => {
-        out += `
+        html += `
             <a href="${l.link}">
                 <img src="${l.img}">
             </a>
         `;
-    })
-    document.getElementById("logoStrip").innerHTML = out;
+    });
+
+    document.getElementById("logoStrip").innerHTML = html;
 }
 
 
 
-/* ===========================
-   GAME GRID
-   =========================== */
+/* ===========================================
+   GAME GRID GENERATOR
+   =========================================== */
 function generateGames(list) {
-    let out = "";
+    let html = "";
 
     list.forEach(g => {
-        let color =
+        let barColor =
             g.rtp >= 80 ? "rtp-green" :
-            g.rtp >= 60 ? "rtp-yellow" : "rtp-red";
+            g.rtp >= 60 ? "rtp-yellow" :
+                          "rtp-red";
 
-        out += `
+        html += `
             <div class="card">
+
                 <img src="${g.img}">
+                
                 <div class="game-name">${g.name}</div>
 
                 <div class="rtp-bar-container">
-                    <div class="rtp-bar ${color}" style="width:${g.rtp}%"></div>
+                    <div class="rtp-bar ${barColor}" style="width:${g.rtp}%"></div>
                 </div>
 
                 <div class="rtp-text">${g.rtp}% RTP</div>
+
             </div>
         `;
     });
 
-    document.getElementById("game-grid").innerHTML = out;
+    document.getElementById("game-grid").innerHTML = html;
 }
