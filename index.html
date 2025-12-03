@@ -2,71 +2,57 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>POP REDE RTP</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link rel="stylesheet" href="style.css?v=1.0">
+    <title>Exclusive Premium Layout</title>
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-    <!-- HEADER -->
-    <header class="header">
-        <a id="btn-register" class="header-btn">REGISTRO</a>
+<div class="container">
 
-        <div class="header-logo">
-            <img id="logo-poprede" src="" alt="POPREDE">
-        </div>
+    <!-- TOP BANNERS -->
+    <div class="top-banners">
 
-        <a id="btn-login" class="header-btn">ENTRE</a>
-    </header>
+        <!-- Banner kiri -->
+        <a id="banner1_link" class="banner-card">
+            <img id="banner1_img" alt="Banner 1">
+        </a>
 
+        <!-- Banner kanan -->
+        <a id="banner2_link" class="banner-card">
+            <img id="banner2_img" alt="Banner 2">
+        </a>
 
-    <!-- HERO SECTION -->
-    <section class="hero-container">
-
-        <!-- LEFT TEXT -->
-        <div class="hero-text">
-            <h2 id="hero-title">Bem-vindo à POPREDE RTP !</h2>
-            <p id="hero-desc">
-                Aproveite sua chance de vencer todos os dias
-                Apresentamos a Atualização Diária de RTP sempre renovada, exclusiva para sua experiência de jogo ideal.
-            </p>
-        </div>
-
-        <!-- RIGHT BANNER -->
-        <div class="hero-banner">
-            <div class="banner-slider">
-                <div id="banner-track" class="banner-track"></div>
-            </div>
-
-            <div id="banner-caption" class="banner-caption"></div>
-            <div id="banner-dots" class="banner-dots"></div>
-        </div>
-
-    </section>
-
-
-    <!-- PROVIDER TITLE -->
-    <div class="provider-title">
-        POP REDE RTP PRAGMATIC PLAY & PG SOFT
     </div>
 
 
-    <!-- LOGO PROVIDER STRIP -->
-    <div id="logo-strip" class="logo-strip"></div>
+    <!-- LOGO AREA -->
+    <div class="logo-section">
+        <div class="logo-row">
 
+            <!-- PG -->
+            <a id="pg_link" class="logo-card">
+                <img id="pg_img" alt="PG Soft">
+            </a>
 
-    <!-- PROVIDER SWITCH -->
-    <div class="provider-switch">
-        <button class="provider active" data-provider="PG" id="default-provider">PG SOFT</button>
-        <button class="provider" data-provider="PRAGMATIC">PRAGMATIC PLAY</button>
+            <!-- LOGO TENGAH -->
+            <a id="mid_link" class="logo-card">
+                <img id="mid_img" alt="Middle Logo">
+            </a>
+
+            <!-- PRAGMATIC -->
+            <a id="prag_link" class="logo-card">
+                <img id="prag_img" alt="Pragmatic Play">
+            </a>
+
+        </div>
     </div>
 
+</div>
 
-    <!-- GAME GRID -->
-    <div id="game-grid"></div>
+<!-- JS -->
+<script src="script.js"></script>
 
-
-    <script src="script.js?v=1.0"></script>
 </body>
 </html>
-
