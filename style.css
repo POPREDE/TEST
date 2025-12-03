@@ -1,16 +1,31 @@
-/* GLOBAL */
+/* =========================================================
+   GLOBAL
+   ========================================================= */
 body {
     margin: 0;
     background: #0d0d0d;
-    font-family: Arial, sans-serif;
+    font-family: 'Poppins', Arial, sans-serif;
     color: white;
+}
+
+/* Container */
+.container {
+    max-width: 1320px;
+    margin: auto;
+    padding: 20px;
+}
+
+/* Fade-in */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
 
 
-/* =======================
-   HEADER + LOGO BESAR
-   ======================= */
+/* =========================================================
+   HEADER
+   ========================================================= */
 .header {
     display: flex;
     justify-content: space-between;
@@ -43,9 +58,9 @@ body {
 
 
 
-/* =======================
+/* =========================================================
    HERO SECTION
-   ======================= */
+   ========================================================= */
 .hero-container {
     display: flex;
     flex-direction: column;
@@ -60,13 +75,14 @@ body {
     color: gold;
     margin: 0 0 10px 0;
 }
+
 .hero-text p {
     font-size: 15px;
     opacity: .9;
     line-height: 1.5;
 }
 
-/* RIGHT BANNER */
+/* RIGHT BANNER SLIDER */
 .hero-banner {
     width: 100%;
 }
@@ -94,7 +110,6 @@ body {
     border-radius: 12px;
 }
 
-/* CAPTION */
 .banner-caption {
     text-align: center;
     padding: 10px 0 4px;
@@ -102,11 +117,11 @@ body {
     font-size: 14px;
 }
 
-/* DOTS */
 .banner-dots {
     text-align: center;
     padding-bottom: 12px;
 }
+
 .banner-dots .dot {
     width: 11px;
     height: 11px;
@@ -116,30 +131,26 @@ body {
     display: inline-block;
     cursor: pointer;
 }
+
 .banner-dots .dot.active {
     background: gold;
 }
 
-/* DESKTOP LAYOUT */
+/* DESKTOP HERO */
 @media (min-width: 820px) {
     .hero-container {
         flex-direction: row;
         align-items: center;
     }
-    .hero-text {
-        flex: 0.8;
-        padding-right: 24px;
-    }
-    .hero-banner {
-        flex: 1.2;
-    }
+    .hero-text { flex: 0.9; padding-right: 24px; }
+    .hero-banner { flex: 1.1; }
 }
 
 
 
-/* =======================
+/* =========================================================
    PROVIDER TITLE
-   ======================= */
+   ========================================================= */
 .provider-title {
     text-align: center;
     padding: 14px;
@@ -152,9 +163,9 @@ body {
 
 
 
-/* =======================
+/* =========================================================
    LOGO STRIP
-   ======================= */
+   ========================================================= */
 .logo-strip {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
@@ -173,12 +184,12 @@ body {
 
 
 
-/* =======================
+/* =========================================================
    PROVIDER SWITCH BUTTONS
-   ======================= */
+   ========================================================= */
 .provider-switch {
     text-align: center;
-    margin-top: 12px;
+    margin-top: 18px;
 }
 
 .provider {
@@ -199,9 +210,9 @@ body {
 
 
 
-/* =======================
+/* =========================================================
    GAME GRID
-   ======================= */
+   ========================================================= */
 #game-grid {
     display: grid;
     justify-content: center;
@@ -217,6 +228,13 @@ body {
     display: flex;
     flex-direction: column;
     height: 250px;
+    transition: .25s ease;
+}
+
+.card:hover {
+    transform: translateY(-6px);
+    border: 1px solid rgba(255,215,0,0.3);
+    box-shadow: 0 0 20px rgba(255,215,0,0.15);
 }
 
 .card img {
@@ -241,15 +259,16 @@ body {
     background: #2d2d2d;
     border-radius: 6px;
 }
+
 .rtp-bar {
     height: 100%;
     border-radius: 6px;
 }
-.rtp-green { background: #22ff4c; }
-.rtp-yellow { background: #ffd93b; }
-.rtp-red { background: #ff4444; }
 
-/* RTP TEXT */
+.rtp-green  { background: #22ff4c; }
+.rtp-yellow { background: #ffd93b; }
+.rtp-red    { background: #ff4444; }
+
 .rtp-text {
     text-align: center;
     margin-top: 6px;
