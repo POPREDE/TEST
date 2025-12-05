@@ -2,68 +2,118 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>PopRede Premium</title>
-    <link rel="stylesheet" href="style.css">
+    <title>PopRede Signature Hologram</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
-<body>
+
+<body class="theme-dark">
+
+<!-- HOLOGRAM WAVES BACKGROUND -->
+<div id="holo-bg"></div>
+<div id="holo-particles"></div>
 
 <!-- HEADER -->
-<div class="header">
-    <div class="header-logo">
-        <img id="header_logo" src="">
+<header class="header">
+    <div class="header-left">
+        <img id="header_logo" class="header-logo" src="">
     </div>
 
-    <a id="header_btn" class="header-btn" href="#">
-        Acessar
-    </a>
-</div>
-
+    <div class="header-right">
+        <button id="themeToggle" class="theme-switch">☀ / 🌙</button>
+        <a id="header_btn" class="header-btn" href="#" target="_blank">Acessar</a>
+    </div>
+</header>
 
 
 <!-- HERO SECTION -->
-<div class="hero-container">
-
-    <div class="hero-text">
-        <h2 id="hero_title">Loading...</h2>
-        <p id="hero_desc">Loading description...</p>
+<section class="hero">
+    <div class="hero-content">
+        <h1 id="hero_title" class="hero-title">Loading...</h1>
+        <p id="hero_desc" class="hero-desc">Loading description...</p>
     </div>
 
     <div class="hero-banner">
         <div class="banner-slider">
             <div class="banner-track" id="bannerTrack"></div>
         </div>
-
         <div class="banner-caption" id="bannerCaption"></div>
         <div class="banner-dots" id="bannerDots"></div>
     </div>
-
-</div>
-
+</section>
 
 
-<!-- PROVIDER TITLE -->
-<div class="provider-title">
-    PROVIDERS
-</div>
+<!-- SEARCH + FILTERS -->
+<section class="filters">
+    
+    <input type="text" id="searchInput" class="search-bar"
+           placeholder="Search game...">
 
-<!-- LOGO STRIP -->
-<div class="logo-strip" id="logoStrip"></div>
+    <select id="filterCategory" class="filter-select">
+        <option value="ALL">All Categories</option>
+        <option value="slots">Slots</option>
+        <option value="fishing">Fishing</option>
+        <option value="crash">Crash</option>
+        <option value="cards">Cards</option>
+    </select>
+
+    <select id="filterVolatility" class="filter-select">
+        <option value="ALL">All Volatility</option>
+        <option value="LOW">Low</option>
+        <option value="MID">Medium</option>
+        <option value="HIGH">High</option>
+        <option value="EXTREME">Extreme</option>
+    </select>
+
+    <select id="filterProvider" class="filter-select">
+        <option value="ALL">All Providers</option>
+        <option value="PG">PG Soft</option>
+        <option value="PRAG">Pragmatic</option>
+    </select>
+
+</section>
 
 
-
-<!-- PROVIDER SWITCH -->
-<div class="provider-switch">
-    <button class="provider active" data-provider="PG">PG Soft</button>
-    <button class="provider" data-provider="PRAG">Pragmatic Play</button>
-</div>
-
+<!-- LOGO GRID -->
+<section class="logo-grid-section">
+    <h2 class="section-title">Providers</h2>
+    <div id="logoStrip" class="logo-strip"></div>
+</section>
 
 
 <!-- GAME GRID -->
-<div id="game-grid"></div>
+<section>
+    <h2 class="section-title">Game List</h2>
+    <div id="game-grid" class="game-grid"></div>
+</section>
 
+
+<!-- MODAL GAME POPUP -->
+<div id="modal" class="modal">
+    <div class="modal-content">
+
+        <span id="modalClose" class="modal-close">×</span>
+
+        <img id="modal_img" class="modal-img">
+
+        <h2 id="modal_name" class="modal-name"></h2>
+        <p id="modal_provider" class="modal-provider"></p>
+
+        <div class="modal-rtp-wrapper">
+            <div class="modal-rtp-bar">
+                <div id="modal_rtp_bar" class="modal-rtp-energy"></div>
+            </div>
+            <div id="modal_rtp_text" class="modal-rtp-text"></div>
+        </div>
+
+        <a id="modal_play" class="modal-button" href="#" target="_blank">
+            ▶ Play Now
+        </a>
+
+    </div>
+</div>
 
 
 <script src="script.js"></script>
+
 </body>
 </html>
