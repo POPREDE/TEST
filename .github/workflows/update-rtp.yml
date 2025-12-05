@@ -1,181 +1,46 @@
-name: POPREDE RTP Auto Generator V5 FULL
+name: POPREDE RTP Auto Engine
 
 on:
   schedule:
-    - cron: "*/5 * * * *"   # auto update 5 menit
+    # Micro update setiap 3 menit
+    - cron: "*/3 * * * *"
+    # Full shuffle setiap 1 jam
+    - cron: "0 * * * *"
   workflow_dispatch:
 
 jobs:
-  build:
+  update_rtp:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
-    - uses: actions/setup-node@v3
-      with:
-        node-version: "18"
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
 
-    # ===============================================================
-    # DOWNLOAD GAME LIST (TSV = TAB DELIMITER)
-    # ===============================================================
-    - name: Download Games CSV
-      run: |
-        curl -L -o games.csv \
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vT7pX1gQOWmhwR9ecnt59QUS7L-T5XBdDuA_dDwfag3BMz8voU3CbIbfTpq5pdtmYc67Wh3-FC17VUQ/pub?gid=0&single=true&output=tsv"
+      # Tentukan mode berdasarkan CRON yang memicu workflow
+      - name: Determine schedule mode
+        id: mode
+        run: |
+          if [[ "${{ github.event.schedule }}" == "0 * * * *" ]]; then
+            echo "mode=hourly" >> $GITHUB_OUTPUT
+          else
+            echo "mode=micro" >> $GITHUB_OUTPUT
+          fi
 
-    # ===============================================================
-    # RTP GENERATION V5 — FULL DYNAMIC + SMART DETECTOR
-    # ===============================================================
-    - name: Generate RTP JSON
-      run: |
-        node << 'EOF'
-        const fs = require("fs");
+      - name: Run RTP Generator
+        run: |
+          SCHEDULE_MODE=${{ steps.mode.outputs.mode }} node rtp-generator.js
 
-        // LOAD TSV
-        const rowsRaw = fs.readFileSync("games.csv","utf8")
-          .trim()
-          .split("\n")
-          .map(line => line.split("\t"));
-
-        const head = rowsRaw.shift().map(h => h.trim());
-        const rows = rowsRaw.map(r => {
-          let o = {};
-          r.forEach((v,i)=> o[head[i]] = (v||"").trim());
-          return o;
-        });
-
-        // SMART PROVIDER DETECTOR
-        function detectProvider(p){
-          p = (p||"").toLowerCase().trim();
-          if(p.includes("pg")) return "PG";
-          if(p.includes("soft")) return "PG";
-          if(p.includes("pgsoft")) return "PG";
-          if(p.includes("prag")) return "PRAGMATIC";
-          if(p.includes("pp")) return "PRAGMATIC";
-          if(p.includes("play")) return "PRAGMATIC";
-          return null;
-        }
-
-        const PG = rows.filter(r=>detectProvider(r.provider)==="PG");
-        const PR = rows.filter(r=>detectProvider(r.provider)==="PRAGMATIC");
-
-        const pgCount = PG.length;
-        const prCount = PR.length;
-
-        // RANDOM 1 DECIMAL
-        const rand = (a,b) => Number((Math.random()*(b-a)+a).toFixed(1));
-
-        // TREND ENGINE
-        const today = new Date().toISOString().split("T")[0];
-        const trendDir = `rtp-history/${today}`;
-        const trendFile = `${trendDir}/trend.json`;
-
-        fs.mkdirSync(trendDir,{recursive:true});
-
-        let trend = "normal";
-        if(!fs.existsSync(trendFile)){
-          const t = ["up","down","normal"];
-          trend = t[Math.floor(Math.random()*t.length)];
-          fs.writeFileSync(trendFile, JSON.stringify({trend}));
-        } else {
-          trend = JSON.parse(fs.readFileSync(trendFile)).trend;
-        }
-
-        // ==========================================================
-        //  DISTRIBUSI V5 — LIMIT BARU (HIGH=15 / LOW=20)
-        // ==========================================================
-        function generateNatural(count){
-          let arr = [];
-
-          const HIGH_LIMIT = 15;
-          const LOW_LIMIT = 10;
-
-          // HIGH RTP
-          let highCount = Math.min(HIGH_LIMIT, count);
-          for(let i=0;i<highCount;i++){
-            let base = trend==="up" ? rand(93,99.9) : rand(90,96);
-            arr.push(base);
-          }
-
-          // LOW RTP (30–50%)
-          let lowCount = Math.min(LOW_LIMIT, count - arr.length);
-          for(let i=0;i<lowCount;i++){
-            let base = rand(30,55);
-            arr.push(base);
-          }
-
-          // MID RANDOM 55–90
-          while(arr.length < count){
-            let base = rand(55,90);
-            arr.push(base);
-          }
-
-          // SHUFFLE
-          arr = arr.sort(()=>Math.random()-0.5);
-
-          return arr.map(v=>Number(v.toFixed(1)));
-        }
-
-        // RESET TIME BR
-        const now = new Date();
-        const hourBR = (now.getUTCHours() - 3 + 24)%24;
-
-        let newPG, newPR;
-
-        if(hourBR === 0){
-          newPG = generateNatural(pgCount);
-          newPR = generateNatural(prCount);
-        } else {
-          let old = {provider:{PG:[],PRAGMATIC:[]}};
-          try{ old = JSON.parse(fs.readFileSync("rtp.json")); }catch{}
-
-          function evolve(ar){
-            return ar.map(v=>{
-              if(v === undefined) v = rand(70,90);
-
-              let c = rand(-1.0,1.3);
-              if(Math.random() < 0.2) c += rand(-2,2);
-              if(Math.random() < 0.1) c += rand(2,4);
-              if(v >= 97) c += rand(-3,-1);
-
-              let x = v+c;
-              return Number(Math.max(30, Math.min(99.9,x)).toFixed(1));
-            });
-          }
-
-          newPG = evolve(old.provider.PG ?? []);
-          newPR = evolve(old.provider.PRAGMATIC ?? []);
-        }
-
-        const out = {
-          provider:{
-            PG: newPG,
-            PRAGMATIC: newPR
-          },
-          noise: Math.random()
-        };
-
-        fs.writeFileSync("rtp.json", JSON.stringify(out,null,2));
-
-        const hh = String(now.getHours()).padStart(2,"0");
-        const mm = String(now.getMinutes()).padStart(2,"0");
-
-        fs.writeFileSync(
-          `${trendDir}/${hh}-${mm}.json`,
-          JSON.stringify(out,null,2)
-        );
-
-        console.log("RTP V5 berhasil dibuat (UPDATED LIMITS).");
-        EOF
-
-    # ===============================================================
-    # PUSH UPDATE
-    # ===============================================================
-    - name: Push Updates
-      run: |
-        git config user.name "github-actions"
-        git config user.email "github-actions@github.com"
-        git add rtp.json rtp-history/
-        git commit -m "RTP V5 Auto Update (UPDATED LIMITS)" || echo "No changes"
-        git push
+      - name: Commit and Push Changes
+        run: |
+          git config user.name "RTP Bot"
+          git config user.email "bot@github.com"
+          git add rtp.json
+          git commit -m "RTP Auto Update (${{ steps.mode.outputs.mode }}) - $(date)" || echo "No changes"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
