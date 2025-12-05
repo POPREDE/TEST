@@ -1,38 +1,91 @@
-/* =========================================================
+/* ============================================================
    GLOBAL
-   ========================================================= */
+============================================================ */
 body {
     margin: 0;
-    background: #0d0d0d;
-    font-family: 'Poppins', Arial, sans-serif;
+    font-family: 'Poppins', sans-serif;
+    overflow-x: hidden;
+    transition: background 0.4s, color 0.4s;
+}
+
+/* Light & Dark theme toggle */
+body.theme-dark { 
+    background: #050505;
     color: white;
 }
-
-/* Container */
-.container {
-    max-width: 1320px;
-    margin: auto;
-    padding: 20px;
+body.theme-light { 
+    background: #f5f5f5;
+    color: #111;
 }
 
-/* Fade-in */
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(20px); }
-    to   { opacity: 1; transform: translateY(0); }
+/* ============================================================
+   HOLOGRAM WAVES BACKGROUND (HW3 Abstract VIP Waves)
+============================================================ */
+#holo-bg {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    background: radial-gradient(circle at 20% 20%, rgba(255,215,0,0.35), transparent 60%),
+                radial-gradient(circle at 80% 80%, rgba(0,255,255,0.25), transparent 60%),
+                radial-gradient(circle at 50% 50%, rgba(155,60,255,0.25), transparent 60%);
+    animation: holo-wave 14s infinite ease-in-out alternate;
+    filter: blur(40px);
 }
 
+@keyframes holo-wave {
+    0%   { transform: scale(1.1) translate(0px, 0px); }
+    50%  { transform: scale(1.2) translate(-30px, 20px); }
+    100% { transform: scale(1.15) translate(30px, -20px); }
+}
 
+/* Floating particles */
+#holo-particles {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+        radial-gradient(circle, rgba(255,255,255,0.12) 2px, transparent 2px),
+        radial-gradient(circle, rgba(255,255,255,0.08) 1px, transparent 1px);
+    background-size: 300px 300px, 500px 500px;
+    animation: float-particles 18s linear infinite;
+    z-index: -1;
+}
 
-/* =========================================================
+@keyframes float-particles {
+    from { background-position: 0 0, 0 0; }
+    to   { background-position: 300px 600px, 500px 900px; }
+}
+
+/* ============================================================
    HEADER
-   ========================================================= */
+============================================================ */
 .header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 14px;
-    background: #111;
-    border-bottom: 1px solid #222;
+    padding: 14px 18px;
+    backdrop-filter: blur(14px);
+    background: rgba(0,0,0,0.45);
+    border-bottom: 1px solid rgba(255,215,0,0.2);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.header-logo {
+    height: 70px;
+    filter: drop-shadow(0 0 6px gold);
+}
+
+.theme-switch {
+    padding: 8px 12px;
+    margin-right: 12px;
+    background: rgba(255,255,255,0.1);
+    color: gold;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 18px;
+    border: 1px solid rgba(255,215,0,0.3);
 }
 
 .header-btn {
@@ -42,235 +95,264 @@ body {
     font-weight: bold;
     border-radius: 10px;
     text-decoration: none;
-    font-size: 15px;
+    transition: 0.3s;
+}
+.header-btn:hover {
+    background: #ffe066;
 }
 
-.header-logo img {
-    height: 65px;
-}
-
-@media (min-width: 600px) {
-    .header-logo img { height: 80px; }
-}
-@media (min-width: 1024px) {
-    .header-logo img { height: 90px; }
-}
-
-
-
-/* =========================================================
+/* ============================================================
    HERO SECTION
-   ========================================================= */
-.hero-container {
+============================================================ */
+.hero {
+    padding: 20px;
     display: flex;
     flex-direction: column;
     gap: 20px;
-    padding: 18px 14px;
 }
 
-/* LEFT TEXT */
-.hero-text h2 {
-    font-size: 26px;
-    font-weight: bold;
+.hero-title {
     color: gold;
-    margin: 0 0 10px 0;
+    font-size: 34px;
+    text-shadow: 0 0 12px rgba(255,215,0,0.7);
 }
 
-.hero-text p {
-    font-size: 15px;
-    opacity: .9;
-    line-height: 1.5;
+.hero-desc {
+    opacity: .85;
+    font-size: 16px;
 }
 
-/* RIGHT BANNER SLIDER */
-.hero-banner {
-    width: 100%;
-}
-
+/* Banner slider */
 .banner-slider {
     overflow: hidden;
-    border-radius: 14px;
+    border-radius: 16px;
 }
-
 .banner-track {
     display: flex;
-    gap: 10px;
-    transition: transform .45s ease;
+    transition: transform .5s ease;
 }
-
-.banner-item {
-    flex: 0 0 100%;
-    padding: 5px;
-}
-
 .banner-item img {
     width: 100%;
-    aspect-ratio: 2/1;
-    object-fit: cover;
-    border-radius: 12px;
+    border-radius: 16px;
+    box-shadow: 0 0 12px rgba(255,255,255,0.2);
 }
-
 .banner-caption {
     text-align: center;
-    padding: 10px 0 4px;
-    color: #eee;
-    font-size: 14px;
-}
-
-.banner-dots {
-    text-align: center;
-    padding-bottom: 12px;
+    margin-top: 6px;
 }
 
 .banner-dots .dot {
-    width: 11px;
-    height: 11px;
+    width: 12px;
+    height: 12px;
     background: #666;
     border-radius: 50%;
-    margin: 3px;
+    margin: 4px;
     display: inline-block;
     cursor: pointer;
 }
-
 .banner-dots .dot.active {
     background: gold;
 }
 
-/* DESKTOP HERO */
-@media (min-width: 820px) {
-    .hero-container {
-        flex-direction: row;
-        align-items: center;
-    }
-    .hero-text { flex: 0.9; padding-right: 24px; }
-    .hero-banner { flex: 1.1; }
+/* ============================================================
+   FILTERS SECTION
+============================================================ */
+.filters {
+    display: flex;
+    gap: 10px;
+    padding: 20px;
+    flex-wrap: wrap;
 }
 
+.search-bar {
+    flex: 1;
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid rgba(255,215,0,0.3);
+    background: rgba(255,255,255,0.1);
+    color: white;
+}
 
-
-/* =========================================================
-   PROVIDER TITLE
-   ========================================================= */
-.provider-title {
-    text-align: center;
-    padding: 14px;
-    background: #1a1a1a;
+.filter-select {
+    padding: 10px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.1);
     color: gold;
-    font-weight: bold;
-    font-size: 18px;
-    margin-top: 12px;
+    border: 1px solid rgba(255,215,0,0.3);
 }
 
+/* ============================================================
+   LOGO GRID
+============================================================ */
+.logo-grid-section {
+    padding: 20px;
+}
+.section-title {
+    font-size: 22px;
+    color: gold;
+    text-shadow: 0 0 8px rgba(255,215,0,0.7);
+}
 
-
-/* =========================================================
-   LOGO STRIP
-   ========================================================= */
 .logo-strip {
+    padding-top: 16px;
     display: grid;
+    gap: 16px;
     grid-template-columns: repeat(2, 1fr);
-    gap: 14px;
-    padding: 14px;
 }
-
 .logo-strip img {
     width: 100%;
-    height: 130px;
+    height: 120px;
     object-fit: contain;
-    background: #111;
-    border-radius: 12px;
-    padding: 12px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 14px;
+    padding: 10px;
+    border: 1px solid rgba(255,215,0,0.25);
+    transition: 0.3s;
+}
+.logo-strip img:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 18px rgba(255,215,0,0.4);
 }
 
-
-
-/* =========================================================
-   PROVIDER SWITCH BUTTONS
-   ========================================================= */
-.provider-switch {
-    text-align: center;
-    margin-top: 18px;
-}
-
-.provider {
-    padding: 12px 20px;
-    background: #222;
-    border: 1px solid #444;
-    color: white;
-    border-radius: 10px;
-    margin: 5px;
-    font-size: 15px;
-    cursor: pointer;
-}
-
-.provider.active {
-    background: gold;
-    color: black;
-}
-
-
-
-/* =========================================================
-   GAME GRID
-   ========================================================= */
-#game-grid {
+/* ============================================================
+   GAME GRID + GLASS HOLO CARDS
+============================================================ */
+.game-grid {
+    padding: 20px;
     display: grid;
-    justify-content: center;
-    gap: 16px;
-    padding: 15px;
-    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 18px;
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
 }
 
 .card {
-    background: #111;
-    border-radius: 14px;
-    padding: 10px;
-    display: flex;
-    flex-direction: column;
-    height: 250px;
-    transition: .25s ease;
+    padding: 12px;
+    border-radius: 16px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,215,0,0.35);
+    backdrop-filter: blur(12px);
+    transition: 0.3s;
+    cursor: pointer;
+    box-shadow: inset 0 0 20px rgba(255,215,0,0.08);
 }
-
 .card:hover {
-    transform: translateY(-6px);
-    border: 1px solid rgba(255,215,0,0.3);
-    box-shadow: 0 0 20px rgba(255,215,0,0.15);
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 0 20px rgba(255,215,0,0.45);
 }
 
 .card img {
     width: 100%;
     height: 150px;
     object-fit: cover;
-    border-radius: 10px;
+    border-radius: 14px;
 }
 
 .game-name {
-    margin-top: 6px;
-    height: 32px;
-    font-size: 12px;
     text-align: center;
+    margin-top: 10px;
+    font-size: 15px;
+    font-weight: 500;
+}
+
+/* ============================================================
+   RTP ENERGY FLOW BAR
+============================================================ */
+.rtp-bar {
+    margin-top: 6px;
+    height: 12px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.1);
     overflow: hidden;
 }
 
-/* RTP BAR */
-.rtp-bar-container {
-    height: 8px;
-    margin-top: 6px;
-    background: #2d2d2d;
-    border-radius: 6px;
-}
-
-.rtp-bar {
+.rtp-fill {
     height: 100%;
-    border-radius: 6px;
+    border-radius: 8px;
+    background: linear-gradient(90deg, gold, cyan);
+    position: relative;
 }
 
-.rtp-green  { background: #22ff4c; }
-.rtp-yellow { background: #ffd93b; }
-.rtp-red    { background: #ff4444; }
+.rtp-fill::after {
+    content: "";
+    position: absolute;
+    left: -40%;
+    top: 0;
+    width: 60%;
+    height: 100%;
+    background: linear-gradient(90deg, rgba(255,255,255,0.4), transparent);
+    animation: energy 1.2s infinite linear;
+}
+
+@keyframes energy {
+    from { left: -40%; }
+    to   { left: 120%; }
+}
 
 .rtp-text {
     text-align: center;
     margin-top: 6px;
-    font-size: 12px;
+}
+
+/* ============================================================
+   MODAL POPUP HOLOGRAM
+============================================================ */
+.modal {
+    display: none;
+    position: fixed;
+    inset: 0;
+    backdrop-filter: blur(12px);
+    background: rgba(0,0,0,0.75);
+    justify-content: center;
+    align-items: center;
+    z-index: 99;
+}
+
+.modal-content {
+    width: 90%;
+    max-width: 420px;
+    padding: 20px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,215,0,0.4);
+    box-shadow: 0 0 40px rgba(255,215,0,0.3);
+    backdrop-filter: blur(16px);
+    text-align: center;
+}
+
+.modal-img {
+    width: 100%;
+    border-radius: 14px;
+}
+
+.modal-close {
+    float: right;
+    font-size: 30px;
+    cursor: pointer;
+    color: gold;
+}
+
+.modal-button {
+    display: block;
+    margin-top: 14px;
+    padding: 12px 20px;
+    background: gold;
+    color: black;
+    text-decoration: none;
+    font-weight: bold;
+    border-radius: 12px;
+    box-shadow: 0 0 12px rgba(255,215,0,0.5);
+}
+
+/* ============================================================
+   RESPONSIVE
+============================================================ */
+@media (min-width: 900px) {
+    .hero {
+        flex-direction: row;
+    }
+    .hero-content {
+        flex: 1;
+    }
+    .hero-banner {
+        flex: 1;
+    }
 }
